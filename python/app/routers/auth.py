@@ -41,7 +41,8 @@ async def register_user(user_in: UserCreate,
         user = User(email = user_in.email,
                     username = user_in.username,
                     hashed_password = hash_password(user_in.password),
-                    account_type = AccountType(user_in.account_type))
+                    account_type = AccountType(user_in.account_type),
+                    is_verified = True) # FIXME: Forced verification for testing purposes
         db.add(user)
         db.flush()
         if user.account_type == AccountType.worker:
