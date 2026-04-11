@@ -127,7 +127,58 @@
 		"settings": "Ustawienia",
 		"logout": "Wyloguj się",
 		"mainDashboard": "Strona główna",
+		"map": "Mapa",
+		"searchPlaceholder": "Szukaj...",
+		"searchLabel": "Szukaj: \"{{query}}\"",
 		"playNow": "Graj"
+	},
+	"search": {
+		"title": "Wyniki wyszukiwania",
+		"resultsFor": "Wyniki dla: \"{{query}}\"",
+		"noQuery": "Wpisz frazę, aby wyszukać pracowników",
+		"noResults": "Nie znaleziono wyników dla \"{{query}}\"",
+		"tryDifferent": "Spróbuj innej frazy lub sprawdź pisownię",
+		"showOnMap": "Pokaż na mapie"
+	},
+	"dashboard": {
+		"greeting": "Rozpocznij poszukiwania pracownika spośród {{employeeCount}} zarejestrowanych osób",
+		"subtitle": "Znajdź idealnego pracownika do swojego projektu",
+		"featuredEmployees": "Wyróżnieni pracownicy",
+		"allEmployees": "Wszyscy pracownicy",
+		"filters": "Filtry",
+		"category": "Kategoria",
+		"location": "Lokalizacja",
+		"availability": "Dostępność",
+		"available": "Dostępny",
+		"unavailable": "Niedostępny",
+		"viewProfile": "Zobacz profil",
+		"noResults": "Nie znaleziono pracowników",
+		"searchPlaceholder": "Szukaj po nazwisku, zawodzie lub lokalizacji...",
+		"pickCategory": "Wybierz kategorię, aby przeglądać pracowników",
+		"backToCategories": "Wróć do kategorii",
+		"experienceYears_one": "{{count}} rok doświadczenia",
+		"experienceYears_few": "{{count}} lata doświadczenia",
+		"experienceYears_many": "{{count}} lat doświadczenia",
+		"categories": {
+			"all": "Wszystkie",
+			"construction": "Budownictwo",
+			"agriculture": "Rolnictwo",
+			"automotive": "Motoryzacja",
+			"technology": "Technologia",
+			"healthcare": "Ochrona zdrowia",
+			"education": "Edukacja",
+			"gastronomy": "Gastronomia",
+			"trade": "Handel",
+			"transport": "Transport",
+			"services": "Usługi"
+		}
+	},
+	"employeeMap": {
+		"totalWorkers": "zarejestrowanych pracowników",
+		"districts": "dzielnic",
+		"workersInDistrict": "pracowników w dzielnicy",
+		"apiKeyMissing": "Brak klucza Google Maps API",
+		"apiKeyMissingDesc": "Dodaj klucz API do pliku .env, aby wyświetlić mapę pracowników."
 	},
 	"errors": {
 		"endpoint_name": "error description"

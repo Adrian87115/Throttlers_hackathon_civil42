@@ -46,7 +46,7 @@ export default function BaseButton({
 				onClick={onClick}
 				type={type}
 				size={size ? size : 'small'}
-				className={`font-medium px-4 py-2 rounded-md min-w-fit normal-case button-shadow
+				className={`font-medium px-4 py-2 rounded-md min-w-fit normal-case
 					bg-transparent text-primary-blue border disabled:opacity-40 border-primary-blue ${
 						className || ''
 					}`}>

@@ -3,6 +3,8 @@ export const AppRoutePaths = {
 	loginPage: () => '/login',
 	registerPage: () => '/register',
 	mainDashboard: () => '/',
+	mapPage: () => '/map',
+	searchPage: (query?: string) => `/search${query ? `?q=${encodeURIComponent(query)}` : ''}`,
 	userProfile: () => `/me/profile`,
 	userSettings: () => `/settings`
 };

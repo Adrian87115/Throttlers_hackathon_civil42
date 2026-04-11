@@ -1,16 +1,17 @@
 import { GlobalStyles, StyledEngineProvider } from '@mui/material';
 import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 import { Toaster } from 'sonner';
-import AuthenticatedRoute from './components/Redirects/AuthenticatedRoute';
 import UnauthenticatedRoute from './components/Redirects/UnauthenticatedRoute';
 import AuthUserContext from './contexts/AuthUserContext';
 import './i18n/i18n';
 import './index.css';
 import BaseLayout from './layouts/BaseLayout';
 import Login from './pages/Login/Login';
-import Register from './pages/Register/Register';
+import EmployeeMap from './pages/EmployeeMap/EmployeeMap';
 import MainDashboard from './pages/MainDashboard/MainDashboard';
 import NotFound from './pages/NotFound/NotFound';
+import SearchResults from './pages/SearchResults/SearchResults';
+import Register from './pages/Register/Register';
 import { AppRoutePaths } from './types/types';
 
 function App() {
@@ -43,11 +44,27 @@ function App() {
 						<Route
 							path={AppRoutePaths.mainDashboard()}
 							element={
-								<AuthenticatedRoute>
-									<BaseLayout>
-										<MainDashboard />
-									</BaseLayout>
-								</AuthenticatedRoute>
+								<BaseLayout>
+									<MainDashboard />
+								</BaseLayout>
+							}
+						/>
+
+						<Route
+							path={AppRoutePaths.mapPage()}
+							element={
+								<BaseLayout>
+									<EmployeeMap />
+								</BaseLayout>
+							}
+						/>
+
+						<Route
+							path="/search"
+							element={
+								<BaseLayout>
+									<SearchResults />
+								</BaseLayout>
 							}
 						/>
 

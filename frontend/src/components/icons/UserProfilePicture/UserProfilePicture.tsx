@@ -21,10 +21,10 @@ export default function UserProfilePicture({ className }: Props) {
 		/>
 	) : (
 		<div
-			className={`h-16 w-16 rounded-full shadow-base shadow-primary-blue flex items-center justify-center profile-pict ${
+			className={`h-16 w-16 rounded-full shadow-base bg-dimmed-blue/30 flex items-center justify-center profile-pict ${
 				className || ''
 			}`}>
-			<UserRound className="w-[60%] h-[60%] text-white" />
+			<UserRound className="w-[60%] h-[60%]" />
 		</div>
 	);
 }

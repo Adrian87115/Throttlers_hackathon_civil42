@@ -7,7 +7,7 @@ export default function NotFound() {
 	const { t } = useTranslation();
 
 	return (
-		<div className="min-h-screen bg-bg-darker text-white relative">
+		<div className="min-h-screen relative">
 			<div className="absolute top-1/3 left-1/2 translate-x-[-50%] translate-y-[-50%] w-[700px]">
 				<div className="flex flex-col items-center">
 					<AppLogo />
