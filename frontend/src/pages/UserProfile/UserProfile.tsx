@@ -49,6 +49,47 @@ interface UserProfileData {
 	verification_status?: string;
 }
 
+function toText(value: unknown): string | undefined {
+	if (value === null || value === undefined) return undefined;
+	if (typeof value === 'string' || typeof value === 'number') {
+		return String(value);
+	}
+	if (typeof value === 'object') {
+		const record = value as Record<string, unknown>;
+		const candidate =
+			record.name ?? record.category ?? record.label ?? record.value;
+		if (typeof candidate === 'string' || typeof candidate === 'number') {
+			return String(candidate);
+		}
+	}
+	return undefined;
+}
+
+function normalizeProfile(raw: UserProfileData): UserProfileData {
+	return {
+		...raw,
+		email: toText(raw.email) || '',
+		username: toText(raw.username) || '',
+		account_type: toText(raw.account_type) || '',
+		first_name: toText(raw.first_name),
+		last_name: toText(raw.last_name),
+		phone: toText(raw.phone),
+		city: toText(raw.city),
+		district: toText(raw.district),
+		skills: toText(raw.skills),
+		category: toText(raw.category),
+		role: toText(raw.role),
+		organization_name: toText(raw.organization_name),
+		nip: toText(raw.nip),
+		regon: toText(raw.regon),
+		org_address: toText(raw.org_address),
+		org_phone: toText(raw.org_phone),
+		contact_person: toText(raw.contact_person),
+		institution_type: toText(raw.institution_type),
+		verification_status: toText(raw.verification_status)
+	};
+}
+
 type EditableFields = Omit<
 	UserProfileData,
 	| 'id'
@@ -134,8 +175,9 @@ export default function UserProfile() {
 		async function fetchProfile() {
 			try {
 				const res = (await callWithToken(getMyProfile)) as UserProfileData;
-				setProfile(res);
-				setDraft(buildDraft(res));
+				const normalized = normalizeProfile(res);
+				setProfile(normalized);
+				setDraft(buildDraft(normalized));
 			} catch {
 				setError('Nie udało się pobrać danych profilu');
 			} finally {
@@ -187,7 +229,9 @@ export default function UserProfile() {
 				patchMyProfile,
 				payload
 			)) as UserProfileData;
-			setProfile(updated);
+			const normalizedUpdated = normalizeProfile(updated);
+			setProfile(normalizedUpdated);
+			setDraft(buildDraft(normalizedUpdated));
 			setEditing(false);
 			toast.success('Profil zaktualizowany');
 		} catch {
