@@ -12,6 +12,7 @@ from app.models.marketplace import (
     Opportunity,
     OpportunityStatus,
     Skill,
+    VerificationStatus,
     WorkerProfile,
 )
 from app.models.user import AccountType, User
@@ -27,6 +28,7 @@ from app.schemas.marketplace import (
     OpportunityOut,
     OpportunityStatusUpdate,
     SkillCreate,
+    SkillUpdate,
     SkillOut,
     WorkerProfileOut,
     WorkerProfileUpdate,
@@ -111,6 +113,52 @@ def create_skill(payload: SkillCreate,
     db.commit()
     db.refresh(skill)
     return skill
+
+
+@router.patch("/skills/{skill_id}", response_model = SkillOut)
+def update_skill(skill_id: int,
+                 payload: SkillUpdate,
+                 db: Session = Depends(get_db),
+                 current_user: User = Depends(get_current_user)):
+    _assert_active_account(current_user)
+    if current_user.role not in {"admin", "owner"}:
+        raise HTTPException(status_code = 403, detail = "Only admins can update skills")
+
+    skill = db.query(Skill).filter(Skill.id == skill_id).first()
+    if not skill:
+        raise HTTPException(status_code = 404, detail = "Skill not found")
+
+    updates = payload.model_dump(exclude_unset = True)
+    if "name" in updates:
+        normalized_name = updates["name"].strip()
+        duplicate = db.query(Skill).filter(Skill.name == normalized_name, Skill.id != skill_id).first()
+        if duplicate:
+            raise HTTPException(status_code = 400, detail = "Skill already exists")
+        skill.name = normalized_name
+    if "category" in updates:
+        skill.category = updates["category"]
+
+    db.add(skill)
+    db.commit()
+    db.refresh(skill)
+    return skill
+
+
+@router.delete("/skills/{skill_id}")
+def delete_skill(skill_id: int,
+                 db: Session = Depends(get_db),
+                 current_user: User = Depends(get_current_user)):
+    _assert_active_account(current_user)
+    if current_user.role not in {"admin", "owner"}:
+        raise HTTPException(status_code = 403, detail = "Only admins can delete skills")
+
+    skill = db.query(Skill).filter(Skill.id == skill_id).first()
+    if not skill:
+        raise HTTPException(status_code = 404, detail = "Skill not found")
+
+    db.delete(skill)
+    db.commit()
+    return {"detail": "Skill deleted"}
 
 
 @router.patch("/workers/me", response_model = WorkerProfileOut)
@@ -267,6 +315,7 @@ def get_my_employer_profile(db: Session = Depends(get_db),
         organization_description = profile.organization_description,
         is_government_service = profile.is_government_service,
         is_verified = profile.is_verified,
+        verification_status = profile.verification_status.value,
     )
 
 
@@ -297,6 +346,7 @@ def update_my_employer_profile(payload: EmployerProfileUpdate,
         organization_description = profile.organization_description,
         is_government_service = profile.is_government_service,
         is_verified = profile.is_verified,
+        verification_status = profile.verification_status.value,
     )
 
 
@@ -311,6 +361,8 @@ def create_opportunity(payload: OpportunityCreate,
     employer_profile = db.query(EmployerProfile).filter(EmployerProfile.user_id == current_user.id).first()
     if not employer_profile:
         raise HTTPException(status_code = 404, detail = "Employer profile not found")
+    if employer_profile.verification_status != VerificationStatus.approved or not employer_profile.is_verified:
+        raise HTTPException(status_code = 403, detail = "Employer account is not approved by admin")
 
     skills = []
     if payload.skill_ids:

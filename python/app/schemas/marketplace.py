@@ -9,6 +9,11 @@ class SkillCreate(BaseModel):
     category: str | None = Field(default = None, max_length = 120)
 
 
+class SkillUpdate(BaseModel):
+    name: str | None = Field(default = None, min_length = 1, max_length = 120)
+    category: str | None = Field(default = None, max_length = 120)
+
+
 class SkillOut(BaseModel):
     id: int
     name: str
@@ -85,6 +90,7 @@ class EmployerProfileOut(BaseModel):
     organization_description: str | None = None
     is_government_service: bool
     is_verified: bool
+    verification_status: str
 
 
 class OpportunityCreate(BaseModel):

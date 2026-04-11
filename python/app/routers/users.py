@@ -1,327 +1,429 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from pydantic import BaseModel
+from typing import Literal
 
-from app.db.session import get_db
-from app.core.security import hash_password, get_current_user, validate_password
-from app.schemas.user import UserOut, SafeUserOut, UserPublicOut
-from app.models.user import User
-from app.models.marketplace import EmployerProfile
-from app.core.security import verify_password, hash_password
-from app.schemas.user import UserOutAdvanced
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
+
 from app.core.logging_config import logger
+from app.core.security import get_current_user, hash_password, validate_password, verify_password
+from app.db.session import get_db
+from app.models.marketplace import EmployerProfile, VerificationStatus
+from app.models.user import AccountType, User
+from app.schemas.user import SafeUserOut, UserOutAdvanced, UserPublicOut
 
 router = APIRouter(tags = ["Users"])
 
-@router.get("/me", response_model = SafeUserOut)
-def read_user_me(current_user: User = Depends(get_current_user)):
-    try:
-        user_data = SafeUserOut(id = current_user.id,
-                                username = current_user.username,
-                                email = current_user.email,
-                                role = current_user.role,
-                                account_type = current_user.account_type.value if current_user.account_type else None,
-                                isAdmin = current_user.role == "admin",
-                                isModerator = current_user.role == "moderator",
-                                isOwner = current_user.role == "owner",)
-        logger.info(f"User id = {current_user.id} requested their profile")
-        return user_data
-    except HTTPException:
-        raise
-    except Exception as e:
-            logger.error(f"Error reading profile for user id = {getattr(current_user, 'id', None)}: {e}", exc_info=True)
-            raise HTTPException(status_code = 500, detail = "Internal server error")
-
-class ChangePasswordRequest(BaseModel):
-    old_password: str
-    new_password: str
-
-@router.patch("/me/change-password")
-def change_password(payload: ChangePasswordRequest,
-                    db: Session = Depends(get_db),
-                    current_user: User = Depends(get_current_user)):
-    try:
-        old_password = payload.old_password
-        new_password = payload.new_password
-        if not validate_password(new_password):
-            raise HTTPException(status_code = 400, detail = "Password must consist of: at least 8 characters, at least 1 small letter, at least 1 capital letter, at least 1 number, at least 1 special character")
-        if not verify_password(old_password, current_user.hashed_password):
-            raise HTTPException(status_code = 400, detail = "Invalid old password")
-        current_user.hashed_password = hash_password(new_password)
-        db.add(current_user)
-        db.commit()
-        logger.info(f"User id = {current_user.id} changed their password successfully")
-        return {"detail": "Password updated successfully"}
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error changing password for user id = {getattr(current_user, 'id', None)}: {e}", exc_info = True)
-        raise HTTPException(status_code = 500, detail = "Internal server error")
-
-@router.get("/", response_model = list[UserPublicOut])
-def list_users(db: Session = Depends(get_db),
-               current_user: User = Depends(get_current_user)):
-    try:
-        if current_user.role not in ["admin", "owner"]:
-            raise HTTPException(status_code = 403, detail = "Only admin or owner can list users")
-        users = db.query(User).all()
-        logger.info(f"Retrieved list of all users, count = {len(users)}")
-        return users
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error listing users: {e}", exc_info = True)
-        raise HTTPException(status_code = 500, detail = "Internal server error")
 
 def require_role(required_roles: list[str]):
     def role_checker(current_user: User = Depends(get_current_user)):
         if current_user.role not in required_roles:
             raise HTTPException(status_code = 403, detail = f"Operation requires one of the roles: {', '.join(required_roles)}")
         return current_user
+
     return role_checker
 
+
+def _assert_active_admin(current_user: User) -> None:
+    if current_user.is_deleted:
+        raise HTTPException(status_code = 403, detail = "Account is deleted")
+    if not current_user.is_active:
+        raise HTTPException(status_code = 403, detail = "Account is inactive")
+
+
+def _assert_admin_hierarchy(actor: User, target: User) -> None:
+    if target.role == "owner":
+        raise HTTPException(status_code = 403, detail = "Owner account can not be modified")
+    if target.id == actor.id:
+        raise HTTPException(status_code = 400, detail = "Can not modify your own account with this endpoint")
+    if actor.role == "admin" and target.role == "admin":
+        raise HTTPException(status_code = 403, detail = "Admins can not modify other admins")
+
+
+class ChangePasswordRequest(BaseModel):
+    old_password: str
+    new_password: str
+
+
 class RoleUpdate(BaseModel):
-    role: str  # "user", "moderator", "admin", "owner"
+    role: Literal["user", "moderator", "admin"]
+
+
+class VerificationApproveRequest(BaseModel):
+    target: Literal["employer", "gov_service"] = "employer"
+
+
+class VerificationRejectRequest(BaseModel):
+    target: Literal["employer", "gov_service"] = "employer"
+
+
+class VerificationRequest(BaseModel):
+    target: Literal["employer", "gov_service"] = "employer"
+
+
+class PendingVerificationOut(BaseModel):
+    user_id: int
+    username: str
+    email: str
+    target: str
+    verification_status: str
+
+
+@router.get("/me", response_model = SafeUserOut)
+def read_user_me(current_user: User = Depends(get_current_user)):
+    user_data = SafeUserOut(
+        id = current_user.id,
+        username = current_user.username,
+        email = current_user.email,
+        role = current_user.role,
+        account_type = current_user.account_type.value if current_user.account_type else None,
+        isAdmin = current_user.role == "admin",
+        isModerator = current_user.role == "moderator",
+        isOwner = current_user.role == "owner",
+    )
+    logger.info(f"User id = {current_user.id} requested their profile")
+    return user_data
+
+
+@router.patch("/me/change-password")
+def change_password(payload: ChangePasswordRequest,
+                    db: Session = Depends(get_db),
+                    current_user: User = Depends(get_current_user)):
+    if not validate_password(payload.new_password):
+        raise HTTPException(status_code = 400, detail = "Password must consist of: at least 8 characters, at least 1 small letter, at least 1 capital letter, at least 1 number, at least 1 special character")
+    if not verify_password(payload.old_password, current_user.hashed_password):
+        raise HTTPException(status_code = 400, detail = "Invalid old password")
+
+    current_user.hashed_password = hash_password(payload.new_password)
+    db.add(current_user)
+    db.commit()
+    logger.info(f"User id = {current_user.id} changed their password successfully")
+    return {"detail": "Password updated successfully"}
+
+
+@router.post("/me/verification-request")
+def request_verification(payload: VerificationRequest,
+                         db: Session = Depends(get_db),
+                         current_user: User = Depends(get_current_user)):
+    if current_user.account_type != AccountType.employer:
+        raise HTTPException(status_code = 403, detail = "Only employer accounts can request verification")
+    if current_user.is_deleted:
+        raise HTTPException(status_code = 403, detail = "Account is deleted")
+    if not current_user.is_verified:
+        raise HTTPException(status_code = 403, detail = "Email must be verified first")
+
+    employer_profile = db.query(EmployerProfile).filter(EmployerProfile.user_id == current_user.id).first()
+    if not employer_profile:
+        raise HTTPException(status_code = 404, detail = "Employer profile not found")
+
+    employer_profile.verification_status = VerificationStatus.pending
+    employer_profile.is_verified = False
+    employer_profile.is_government_service = payload.target == "gov_service"
+    current_user.is_active = False
+    if payload.target == "employer" and current_user.role == "gov_service":
+        current_user.role = "user"
+
+    db.add(employer_profile)
+    db.add(current_user)
+    db.commit()
+    logger.info(f"User id = {current_user.id} requested verification target = {payload.target}")
+    return {"detail": f"Verification request submitted for {payload.target}"}
+
+
+@router.get("/", response_model = list[UserPublicOut])
+def list_users(db: Session = Depends(get_db),
+               current_user: User = Depends(get_current_user)):
+    if current_user.role not in ["admin", "owner"]:
+        raise HTTPException(status_code = 403, detail = "Only admin or owner can list users")
+    users = db.query(User).all()
+    logger.info(f"Retrieved list of all users, count = {len(users)}")
+    return users
+
 
 @router.put("/{user_id}/role")
-def update_user_role(user_id: int, role_update: RoleUpdate,
+def update_user_role(user_id: int,
+                     role_update: RoleUpdate,
                      db: Session = Depends(get_db),
                      current_user: User = Depends(require_role(["admin", "owner"]))):
-    try:
-        user = db.query(User).filter(User.id == user_id).first()
-        if not current_user.is_active:
-            logger.warning(f"Inactive user id = {current_user.id} attempted to update roles")
-            raise HTTPException(status_code = 403, detail = "Inactive accounts can not update roles")
-        if not user:
-            logger.warning(f"User id = {user_id} not found for role update")
-            raise HTTPException(status_code = 404, detail = "User not found")
-        if not user.is_verified:
-            logger.warning(f"Attempt to update role of not verified account user id = {user.id}")
-            raise HTTPException(status_code = 403, detail = "Account not verified")
-        if user.is_deleted:
-            logger.warning(f"Attempt to update role of deleted account user id = {user.id}")
-            raise HTTPException(status_code = 403, detail = "Account was deleted")
-        if role_update.role not in ["user", "moderator", "admin", "gov_service"]:
-            logger.warning(f"Invalid role '{role_update.role}' provided by user id = {current_user.id}")
-            raise HTTPException(status_code = 400, detail = "Invalid role")
-        if role_update.role == "gov_service" and user.account_type is None:
-            logger.warning(f"Attempt to assign gov_service role to user id = {user.id} without account_type")
-            raise HTTPException(status_code = 400, detail = "Service role requires employer account")
-        if role_update.role == "gov_service" and user.account_type.value != "employer":
-            logger.warning(f"Attempt to assign gov_service role to non-employer user id = {user.id}")
-            raise HTTPException(status_code = 400, detail = "Service role requires employer account")
-        if user.role == "owner":
-            logger.warning(f"Attempt to change owner's role user id = {user.id} by user id = {current_user.id}")
-            raise HTTPException(status_code = 403, detail = "Owner's role can not be changed")
-        if user.id == current_user.id and role_update.role != "admin": # admin can not demote themselves
-            logger.warning(f"Admin user id = {current_user.id} tried to demote themselves")
-            raise HTTPException(status_code = 403, detail = "Admin can not change their own role or the role of other admins")
+    _assert_active_admin(current_user)
 
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code = 404, detail = "User not found")
+    if not user.is_verified:
+        raise HTTPException(status_code = 403, detail = "Account not verified")
+    if user.is_deleted:
+        raise HTTPException(status_code = 403, detail = "Account was deleted")
+
+    _assert_admin_hierarchy(current_user, user)
+
+    if user.role == "gov_service" and role_update.role != "user":
+        raise HTTPException(status_code = 400, detail = "Gov service account can only be demoted to user by role endpoint")
+
+    if user.role == "gov_service" and role_update.role == "user":
         employer_profile = db.query(EmployerProfile).filter(EmployerProfile.user_id == user.id).first()
         if employer_profile:
-            employer_profile.is_government_service = role_update.role == "gov_service"
+            employer_profile.is_government_service = False
             db.add(employer_profile)
 
-        user.role = role_update.role
-        db.commit()
-        db.refresh(user)
-        logger.info(f"User id = {current_user.id} updated role for user id = {user.id} to {user.role}, by user id = {current_user.id}")
-        return {"id": user.id, "username": user.username, "role": user.role}
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error updating role for user id = {user_id}: {e}", exc_info = True)
-        raise HTTPException(status_code = 500, detail = "Internal server error")
+    user.role = role_update.role
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    logger.info(f"User id = {current_user.id} updated role for user id = {user.id} to {user.role}")
+    return {"id": user.id, "username": user.username, "role": user.role}
+
 
 @router.get("/advanced", response_model = list[UserOutAdvanced])
 def list_users_advanced(db: Session = Depends(get_db),
                         _: User = Depends(require_role(["owner", "admin", "moderator"]))):
-    try:
-        users = db.query(User).all()
-        logger.info(f"Retrieved advanced list of all users, count = {len(users)}")
-        return users
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error listing users: {e}", exc_info = True)
-        raise HTTPException(status_code = 500, detail = "Internal server error")
+    users = db.query(User).all()
+    logger.info(f"Retrieved advanced list of all users, count = {len(users)}")
+    return users
+
+
+@router.get("/admin/verifications/pending", response_model = list[PendingVerificationOut])
+def list_pending_verifications(target: str = Query(default = "all"),
+                               db: Session = Depends(get_db),
+                               current_user: User = Depends(require_role(["admin", "owner"]))):
+    _assert_active_admin(current_user)
+
+    if target not in {"all", "employer", "gov_service"}:
+        raise HTTPException(status_code = 400, detail = "target must be one of: all, employer, gov_service")
+
+    query = db.query(User, EmployerProfile).join(EmployerProfile, EmployerProfile.user_id == User.id)
+    query = query.filter(
+        User.is_deleted.is_(False),
+        User.account_type == AccountType.employer,
+        User.is_verified.is_(True),
+        EmployerProfile.verification_status == VerificationStatus.pending,
+    )
+
+    if target == "employer":
+        query = query.filter(EmployerProfile.is_government_service.is_(False))
+    elif target == "gov_service":
+        query = query.filter(EmployerProfile.is_government_service.is_(True))
+
+    rows = query.order_by(User.id.desc()).all()
+    return [
+        PendingVerificationOut(
+            user_id = user.id,
+            username = user.username,
+            email = user.email,
+            target = "gov_service" if profile.is_government_service else "employer",
+            verification_status = profile.verification_status.value,
+        )
+        for user, profile in rows
+    ]
+
+
+@router.patch("/admin/verifications/{user_id}/approve")
+def approve_verification(user_id: int,
+                         payload: VerificationApproveRequest,
+                         db: Session = Depends(get_db),
+                         current_user: User = Depends(require_role(["admin", "owner"]))):
+    _assert_active_admin(current_user)
+
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code = 404, detail = "User not found")
+    if user.account_type != AccountType.employer:
+        raise HTTPException(status_code = 400, detail = "Only employer accounts can be approved by this endpoint")
+    if user.is_deleted:
+        raise HTTPException(status_code = 403, detail = "Account was deleted")
+    _assert_admin_hierarchy(current_user, user)
+
+    employer_profile = db.query(EmployerProfile).filter(EmployerProfile.user_id == user.id).first()
+    if not employer_profile:
+        raise HTTPException(status_code = 404, detail = "Employer profile not found")
+
+    if payload.target == "gov_service":
+        employer_profile.is_government_service = True
+        user.role = "gov_service"
+    else:
+        employer_profile.is_government_service = False
+        if user.role == "gov_service":
+            user.role = "user"
+
+    employer_profile.verification_status = VerificationStatus.approved
+    employer_profile.is_verified = True
+    user.is_active = True
+
+    db.add(employer_profile)
+    db.add(user)
+    db.commit()
+    logger.info(f"User id = {current_user.id} approved verification for user id = {user.id}, target = {payload.target}")
+    return {"detail": f"Verification approved for {payload.target}", "user_id": user.id}
+
+
+@router.patch("/admin/verifications/{user_id}/reject")
+def reject_verification(user_id: int,
+                        payload: VerificationRejectRequest,
+                        db: Session = Depends(get_db),
+                        current_user: User = Depends(require_role(["admin", "owner"]))):
+    _assert_active_admin(current_user)
+
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code = 404, detail = "User not found")
+    if user.account_type != AccountType.employer:
+        raise HTTPException(status_code = 400, detail = "Only employer accounts can be rejected by this endpoint")
+    if user.is_deleted:
+        raise HTTPException(status_code = 403, detail = "Account was deleted")
+    _assert_admin_hierarchy(current_user, user)
+
+    employer_profile = db.query(EmployerProfile).filter(EmployerProfile.user_id == user.id).first()
+    if not employer_profile:
+        raise HTTPException(status_code = 404, detail = "Employer profile not found")
+
+    if payload.target == "gov_service":
+        employer_profile.is_government_service = False
+        if user.role == "gov_service":
+            user.role = "user"
+
+    employer_profile.verification_status = VerificationStatus.rejected
+    employer_profile.is_verified = False
+    user.is_active = False
+
+    db.add(employer_profile)
+    db.add(user)
+    db.commit()
+    logger.info(f"User id = {current_user.id} rejected verification for user id = {user.id}, target = {payload.target}")
+    return {"detail": f"Verification rejected for {payload.target}", "user_id": user.id}
+
 
 def soft_delete_user(db: Session, user: User):
     user.is_deleted = True
     user.is_active = False
+    db.add(user)
     db.commit()
 
+
 @router.delete("/me")
-def delete_account(db: Session = Depends(get_db), 
+def delete_account(db: Session = Depends(get_db),
                    current_user: User = Depends(get_current_user)):
-    try:
-        if current_user.role == "owner":
-            logger.warning(f"Owner user id = {current_user.id} attempted to delete their own account")
-            raise HTTPException(status_code = 403, detail = "Owner can not delete their own account")
-        if current_user.is_deleted:
-            logger.warning(f"User id = {current_user.id} attempted to delete an already deleted account")
-            raise HTTPException(status_code = 403, detail = "Account is already deleted")
-        soft_delete_user(db, current_user)  
-        logger.info(f"User id = {current_user.id} deleted their account")
-        return {"detail": "Your account has been deleted"}
-    except HTTPException:
-        raise
-    except Exception as e:
-            logger.error(f"Error deleting account for user id = {current_user.id}: {e}", exc_info = True)
-            raise HTTPException(status_code = 500, detail = "Internal server error")
-    
-@router.delete("/{user_id}") # status_code = status.HTTP_204_NO_CONTENT no content for schema to display
+    if current_user.role == "owner":
+        raise HTTPException(status_code = 403, detail = "Owner can not delete their own account")
+    if current_user.is_deleted:
+        raise HTTPException(status_code = 403, detail = "Account is already deleted")
+    soft_delete_user(db, current_user)
+    logger.info(f"User id = {current_user.id} deleted their account")
+    return {"detail": "Your account has been deleted"}
+
+
+@router.delete("/{user_id}")
 def delete_user(user_id: int,
                 db: Session = Depends(get_db),
                 current_user: User = Depends(require_role(["admin", "owner"]))):
-    try:
-        user_to_delete = db.query(User).filter(User.id == user_id).first()
-        if not current_user.is_active:
-            logger.warning(f"Inactive user id = {current_user.id} attempted to delete user id = {user_id}")
-            raise HTTPException(status_code = 403, detail = "Inactive accounts can not delete users")
-        if not user_to_delete:
-            logger.warning(f"User id = {user_id} not found for deletion by user id = {current_user.id}")
-            raise HTTPException(status_code = 404, detail = "User not found")
-        if user_to_delete.is_deleted:
-            logger.warning(f"Attempt to delete already deleted account user id = {user_to_delete.id}")
-            raise HTTPException(status_code = 403, detail = "Account is already deleted")
-        if user_to_delete.role == "owner":
-            logger.warning(f"Attempt to delete owner account user id = {user_to_delete.id}")
-            raise HTTPException(status_code = 403, detail = "Owner can not be deleted")
-        if user_to_delete.id == current_user.id: # to self delete there is another function
-            logger.warning(f"User id = {current_user.id} attempted to delete their own account")
-            raise HTTPException(status_code = 400, detail = "Can not delete your own account") # prevents admin and owner from deleting their own account and self locking
-        if current_user.role == "admin" and user_to_delete.role == "admin":
-            logger.warning(f"Admin user id = {current_user.id} attempted to delete another admin user id = {user_to_delete.id}")
-            raise HTTPException(status_code = 403, detail = "Admins can not delete other admins")
-        soft_delete_user(db, user_to_delete)
-        logger.info(f"User id = {current_user.id} deleted user id = {user_to_delete.id}")
-        return {"detail": "User deleted successfully"}
-    except HTTPException:
-        raise
-    except Exception as e:
-            logger.error(f"Error deleting account for user id = {current_user.id}: {e}", exc_info = True)
-            raise HTTPException(status_code = 500, detail = "Internal server error")
-    
-@router.patch("/{user_id}/ban")
-def ban_user(user_id: int,
-             db: Session = Depends(get_db),
-             current_user: User = Depends(require_role(["owner", "admin", "moderator"]))):
-    try:
-        if not current_user.is_active:
-            logger.warning(f"Inactive user id = {current_user.id} attempted to ban user id = {user_id}")
-            raise HTTPException(status_code = 403, detail = "Inactive accounts can not ban users")
-        user_to_ban = db.query(User).filter(User.id == user_id).first()
-        if not user_to_ban:
-            logger.warning(f"User id = {user_id} not found for banning by user id = {current_user.id}")
-            raise HTTPException(status_code = 404, detail = "User not found")
-        if user_to_ban.is_deleted:
-            logger.warning(f"Attempt to ban deleted user id = {user_to_ban.id}")
-            raise HTTPException(status_code = 403, detail = "Account was deleted")
-        if user_to_ban.role == "owner":
-            logger.warning(f"Attempt to ban owner user id = {user_to_ban.id}")
-            raise HTTPException(status_code = 403, detail = "Owner can not be banned")
-        if user_to_ban.id == current_user.id:
-            logger.warning(f"User id = {current_user.id} attempted to self-ban")
-            raise HTTPException(status_code = 400, detail = "Cannot self ban")
-        if not user_to_ban.is_active:
-            logger.warning(f"User id = {user_to_ban.id} is already banned")
-            raise HTTPException(status_code = 400, detail = "User is already banned")
-        if current_user.role == "moderator" and user_to_ban.role in ["moderator", "admin", "owner"]:
-            logger.warning(f"Moderator id = {current_user.id} attempted to ban higher or equal role user id = {user_to_ban.id}")
-            raise HTTPException(status_code = 403, detail = "Moderators can not ban other moderators, admins and owner")
-        if current_user.role == "admin" and user_to_ban.role == "admin":
-            logger.warning(f"Admin id = {current_user.id} attempted to ban another admin user id = {user_to_ban.id}")
-            raise HTTPException(status_code = 403, detail = "Admins can not ban other admins")
-        user_to_ban.is_active = False
-        db.commit()
-        logger.info(f"User id = {current_user.id} banned user id = {user_to_ban.id}")
-        return {"detail": f"User '{user_to_ban.username}' has been banned successfully"}
-    except HTTPException:
-        raise
-    except Exception as e:
-            logger.error(f"Error deleting account for user id = {current_user.id}: {e}", exc_info = True)
-            raise HTTPException(status_code = 500, detail = "Internal server error")
-       
-@router.patch("/{user_id}/unban")
-def unban_user(user_id: int,
-               db: Session = Depends(get_db),
-               current_user: User = Depends(require_role(["admin", "moderator", "owner"]))):
-    try:
-        if not current_user.is_active:
-            logger.warning(f"Inactive user id = {current_user.id} attempted to unban user id = {user_id}")
-            raise HTTPException(status_code = 403, detail = "Inactive accounts can not unban users")
-        user_to_unban = db.query(User).filter(User.id == user_id).first()
-        if not user_to_unban:
-            logger.warning(f"User id = {user_id} not found for unbanning")
-            raise HTTPException(status_code = 404, detail = "User not found")
-        if user_to_unban.is_deleted:
-            logger.warning(f"Attempt to unban deleted user id = {user_to_unban.id}")
-            raise HTTPException(status_code = 403, detail = "Account was deleted")
-        if user_to_unban.role == "owner": # since owner can not be banned, they can not be unbanned
-            logger.warning(f"Attempt to unban owner user id = {user_to_unban.id}")
-            raise HTTPException(status_code = 403, detail = "Owner can not be unbanned")
-        if user_to_unban.id == current_user.id:
-            logger.warning(f"User id = {current_user.id} attempted to self-unban")
-            raise HTTPException(status_code = 400, detail = "Can not self unban")
-        if user_to_unban.is_active:
-            logger.warning(f"User id = {user_to_unban.id} is not banned")
-            raise HTTPException(status_code = 400, detail = "User is not banned")
-        if not user_to_unban.is_verified:
-            logger.warning(f"User id = {user_to_unban.id} is not verified")
-            raise HTTPException(status_code = 400, detail = "User is not verified")
-        if current_user.role == "moderator" and user_to_unban.role in ["moderator", "admin", "owner"]:
-            logger.warning(f"Moderator id = {current_user.id} attempted to unban higher or equal role user id = {user_to_unban.id}")
-            raise HTTPException(status_code = 403, detail = "Moderators can not unban other moderators, admins and owner")
-        if current_user.role == "admin" and user_to_unban.role == "admin":
-            logger.warning(f"Admin id = {current_user.id} attempted to unban another admin user id = {user_to_unban.id}")
-            raise HTTPException(status_code = 403, detail = "Admins can not unban other admins")
-        user_to_unban.is_active = True
-        db.commit()
-        logger.info(f"User id = {current_user.id} unbanned user id = {user_to_unban.id}")
-        return {"detail": f"User '{user_to_unban.username}' has been unbanned successfully"}
-    except HTTPException:
-        raise
-    except Exception as e:
-            logger.error(f"Error deleting account for user id = {current_user.id}: {e}", exc_info = True)
-            raise HTTPException(status_code = 500, detail = "Internal server error")
-    
+    _assert_active_admin(current_user)
+
+    user_to_delete = db.query(User).filter(User.id == user_id).first()
+    if not user_to_delete:
+        raise HTTPException(status_code = 404, detail = "User not found")
+    if user_to_delete.is_deleted:
+        raise HTTPException(status_code = 403, detail = "Account is already deleted")
+
+    _assert_admin_hierarchy(current_user, user_to_delete)
+
+    soft_delete_user(db, user_to_delete)
+    logger.info(f"User id = {current_user.id} deleted user id = {user_to_delete.id}")
+    return {"detail": "User deleted successfully"}
+
+
+@router.patch("/{user_id}/deactivate")
+def deactivate_user(user_id: int,
+                    db: Session = Depends(get_db),
+                    current_user: User = Depends(require_role(["owner", "admin", "moderator"]))):
+    _assert_active_admin(current_user)
+
+    user_to_deactivate = db.query(User).filter(User.id == user_id).first()
+    if not user_to_deactivate:
+        raise HTTPException(status_code = 404, detail = "User not found")
+    if user_to_deactivate.is_deleted:
+        raise HTTPException(status_code = 403, detail = "Account was deleted")
+    if not user_to_deactivate.is_active:
+        raise HTTPException(status_code = 400, detail = "User is already inactive")
+    if user_to_deactivate.role == "owner":
+        raise HTTPException(status_code = 403, detail = "Owner account can not be modified")
+    if user_to_deactivate.id == current_user.id:
+        raise HTTPException(status_code = 400, detail = "Can not deactivate your own account")
+    if current_user.role == "moderator" and user_to_deactivate.role in ["moderator", "admin", "owner"]:
+        raise HTTPException(status_code = 403, detail = "Moderators can not modify moderators, admins or owner")
+    if current_user.role == "admin" and user_to_deactivate.role == "admin":
+        raise HTTPException(status_code = 403, detail = "Admins can not modify other admins")
+
+    user_to_deactivate.is_active = False
+    db.add(user_to_deactivate)
+    db.commit()
+    logger.info(f"User id = {current_user.id} deactivated user id = {user_to_deactivate.id}")
+    return {"detail": f"User '{user_to_deactivate.username}' has been deactivated successfully"}
+
+
+@router.patch("/{user_id}/reactivate")
+def reactivate_user(user_id: int,
+                    db: Session = Depends(get_db),
+                    current_user: User = Depends(require_role(["admin", "moderator", "owner"]))):
+    _assert_active_admin(current_user)
+
+    user_to_reactivate = db.query(User).filter(User.id == user_id).first()
+    if not user_to_reactivate:
+        raise HTTPException(status_code = 404, detail = "User not found")
+    if user_to_reactivate.is_deleted:
+        raise HTTPException(status_code = 403, detail = "Account was deleted")
+    if user_to_reactivate.is_active:
+        raise HTTPException(status_code = 400, detail = "User is already active")
+    if not user_to_reactivate.is_verified:
+        raise HTTPException(status_code = 400, detail = "User is not verified")
+    if user_to_reactivate.role == "owner":
+        raise HTTPException(status_code = 403, detail = "Owner account can not be modified")
+    if user_to_reactivate.id == current_user.id:
+        raise HTTPException(status_code = 400, detail = "Can not reactivate your own account")
+    if current_user.role == "moderator" and user_to_reactivate.role in ["moderator", "admin", "owner"]:
+        raise HTTPException(status_code = 403, detail = "Moderators can not modify moderators, admins or owner")
+    if current_user.role == "admin" and user_to_reactivate.role == "admin":
+        raise HTTPException(status_code = 403, detail = "Admins can not modify other admins")
+
+    user_to_reactivate.is_active = True
+    db.add(user_to_reactivate)
+    db.commit()
+    logger.info(f"User id = {current_user.id} reactivated user id = {user_to_reactivate.id}")
+    return {"detail": f"User '{user_to_reactivate.username}' has been reactivated successfully"}
+
+
 @router.get("/user-management", response_model = list[UserOutAdvanced])
 def user_management(show_role: str = "all",
-                    db: Session = Depends(get_db), 
+                    db: Session = Depends(get_db),
                     current_user: User = Depends(require_role(["admin", "moderator", "owner"]))):
-    try:
-        if show_role not in ["all", "user", "moderator", "admin", "owner"]:
-            raise HTTPException(status_code = 400, detail = "Incorrect role to show")
-        query = db.query(User)
-        if current_user.role == "moderator":
+    if show_role not in ["all", "user", "moderator", "admin", "owner", "gov_service"]:
+        raise HTTPException(status_code = 400, detail = "Incorrect role to show")
+
+    query = db.query(User)
+    if current_user.role == "moderator":
+        query = query.filter(User.role == "user")
+    elif current_user.role == "admin":
+        if show_role == "user":
             query = query.filter(User.role == "user")
-        elif current_user.role == "admin":
-            if show_role == "user":
-                query = query.filter(User.role == "user")
-            elif show_role == "moderator":
-                query = query.filter(User.role == "moderator")
-            elif show_role == "all":
-                query = query.filter(User.role.in_(["user", "moderator"]))
-            else:
-                raise HTTPException(status_code = 403, detail = "Admins can only view users, moderators, or all")
-        elif current_user.role == "owner":
-            if show_role != "all":
-                query = query.filter(User.role == show_role)
-        users = query.all()
-        logger.info(f"User id = {current_user.id}, role = {current_user.role}, requested {len(users)} users (show_role = {show_role})")
-        return users
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error user management: {e}", exc_info = True)
-        raise HTTPException(status_code = 500, detail = "Internal server error")
-    
+        elif show_role == "moderator":
+            query = query.filter(User.role == "moderator")
+        elif show_role == "gov_service":
+            query = query.filter(User.role == "gov_service")
+        elif show_role == "all":
+            query = query.filter(User.role.in_(["user", "moderator", "gov_service"]))
+        else:
+            raise HTTPException(status_code = 403, detail = "Admins can only view users, moderators, gov_service, or all")
+    elif current_user.role == "owner" and show_role != "all":
+        query = query.filter(User.role == show_role)
+
+    users = query.all()
+    logger.info(f"User id = {current_user.id}, role = {current_user.role}, requested {len(users)} users (show_role = {show_role})")
+    return users
+
+
 def get_username_from_id(user_id: int, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code = 404, detail = f"User with id {user_id} not found")
     return user.username
+
 
 @router.get("/{id}", response_model = UserPublicOut)
 def get_user(id: int,
@@ -331,5 +433,5 @@ def get_user(id: int,
         raise HTTPException(status_code = 403, detail = "Only admin or owner can view user details")
     user = db.query(User).filter(User.id == id).first()
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code = 404, detail = "User not found")
     return user

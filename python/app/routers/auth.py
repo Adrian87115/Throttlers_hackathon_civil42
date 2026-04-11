@@ -9,8 +9,8 @@ from datetime import timedelta
 from app.db.session import get_db
 from app.models.user import User
 from app.models.user import AccountType
-from app.models.marketplace import WorkerProfile, EmployerProfile
-from app.core.security import verify_password, hash_password, create_access_token, validate_password, create_access_token, get_current_user
+from app.models.marketplace import WorkerProfile, EmployerProfile, VerificationStatus
+from app.core.security import verify_password, hash_password, create_access_token, validate_password, get_current_user
 from app.auth.email import create_email_token, decode_email_token, send_verification_email, send_password_reset, is_email
 from app.schemas.user import UserCreate, UserOut
 from app.core.logging_config import logger
@@ -48,7 +48,9 @@ async def register_user(user_in: UserCreate,
             db.add(WorkerProfile(user_id = user.id))
         elif user.account_type == AccountType.employer:
             db.add(EmployerProfile(user_id = user.id,
-                                   organization_name = user.username))
+                                   organization_name = user.username,
+                                   is_verified = False,
+                                   verification_status = VerificationStatus.pending))
         db.commit()
         db.refresh(user)
         token = create_email_token({"sub": user.email})
@@ -74,14 +76,14 @@ def verify_email(token: str,
         if not user:
             logger.warning(f"Email verification failed: no user found for email = '{email}'")
             raise HTTPException(status_code = 404, detail = "User not found")
-        if not user.is_active and user.is_verified:
-            logger.warning(f"Banned user id = {user.id} attempted email verification")
-            raise HTTPException(status_code = 403, detail = "Account is banned")
         if user.is_deleted:
             logger.warning(f"Deleted user id = {user.id} attempted email verification")
             raise HTTPException(status_code = 403, detail = "Account is deleted")
         user.is_verified = True
-        user.is_active = True
+        if user.account_type == AccountType.worker:
+            user.is_active = True
+        else:
+            user.is_active = False
         db.commit()
         logger.info(f"User id = {user.id} successfully verified email = '{user.email}'")
         return RedirectResponse(url = f"http://localhost:3000/verify/{token}")
@@ -102,6 +104,9 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(),
         if user.is_deleted:
             logger.warning(f"Deleted account login attempt for user id = {user.id}")
             raise HTTPException(status_code = 403, detail = "Account is deleted")
+        if not user.is_active:
+            logger.warning(f"Inactive account login attempt for user id = {user.id}")
+            raise HTTPException(status_code = 403, detail = "Account is inactive")
         access_token = create_access_token(data = {"sub": str(user.id)})
         logger.info(f"User id = {user.id} logged in successfully")
         return {"access_token": access_token, "token_type": "bearer"}

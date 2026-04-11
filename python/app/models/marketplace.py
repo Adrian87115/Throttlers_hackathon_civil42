@@ -38,6 +38,12 @@ class CompensationType(str, enum.Enum):
     both = "both"
 
 
+class VerificationStatus(str, enum.Enum):
+    pending = "pending"
+    approved = "approved"
+    rejected = "rejected"
+
+
 worker_skills = Table(
     "worker_skills",
     Base.metadata,
@@ -107,6 +113,11 @@ class EmployerProfile(Base):
     organization_description = Column(Text, nullable = True)
     is_government_service = Column(Boolean, nullable = False, default = False)
     is_verified = Column(Boolean, nullable = False, default = False)
+    verification_status = Column(
+        Enum(VerificationStatus, name = "verification_status"),
+        nullable = False,
+        default = VerificationStatus.pending,
+    )
     created_at = Column(DateTime(timezone = True), nullable = False, server_default = func.now())
     updated_at = Column(DateTime(timezone = True), nullable = False, server_default = func.now(), onupdate = func.now())
 
