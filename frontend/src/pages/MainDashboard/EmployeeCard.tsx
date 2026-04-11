@@ -1,4 +1,5 @@
 import BaseButton from '@/components/Buttons/BaseButton';
+import { useAuth } from '@/contexts/AuthUserContext';
 import { AppRoutePaths } from '@/types/types';
 import { Briefcase, MapPin, UserRound } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -33,6 +34,31 @@ type Props = {
 
 export default function EmployeeCard({ employee }: Props) {
 	const { t } = useTranslation();
+	const { auth } = useAuth();
+	const isAuthenticated = auth.user !== null;
+
+	if (!isAuthenticated) {
+		return (
+			<div className="group rounded-xl border-none bg-gray p-5 shadow-base transition-all duration-200 hover:shadow-base-tile hover:-translate-y-0.5">
+				<div className="flex-1 min-w-0">
+					<p className="text-sm text-black">{employee.role}</p>
+
+					<div className="flex items-center gap-3 mt-3">
+						<div className="flex items-center gap-1 text-xs text-gray-400">
+							<MapPin size={12} />
+							<span>{employee.location}</span>
+						</div>
+					</div>
+				</div>
+
+				<div className="mt-4 pt-3 border-t border-gray-700">
+					<BaseButton size="small" className="w-full!" disabled>
+						{t('dashboard.viewProfile')}
+					</BaseButton>
+				</div>
+			</div>
+		);
+	}
 
 	return (
 		<div className="group rounded-xl border border-base-border bg-white p-5 shadow-base transition-all duration-200 hover:shadow-base-tile hover:-translate-y-0.5">

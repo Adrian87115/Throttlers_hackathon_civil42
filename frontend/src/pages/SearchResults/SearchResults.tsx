@@ -5,6 +5,7 @@ import {
 	DialogHeader,
 	DialogTitle
 } from '@/components/ui/dialog';
+import { useAuth } from '@/contexts/AuthUserContext';
 import { ALL_EMPLOYEES } from '@/data/employees';
 import envConfig from '@/types/envConfig';
 import {
@@ -72,10 +73,12 @@ function findDistrictByEmployee(employeeName: string) {
 
 function DistrictPolygon({
 	employeeName,
-	employeeRole
+	employeeRole,
+	isAuthenticated
 }: {
 	employeeName: string;
 	employeeRole: string;
+	isAuthenticated: boolean;
 }) {
 	const map = useMap();
 	const geometryLib = useMapsLibrary('geometry');
@@ -118,10 +121,12 @@ function DistrictPolygon({
 			pointer-events: none;
 			font-family: Inter, sans-serif;
 		`;
-		container.innerHTML = `
-			<div style="font-size: 13px; font-weight: 600; color: #111827;">${employeeName}</div>
-			<div style="font-size: 11px; color: #6b7280;">${employeeRole}</div>
-		`;
+		container.innerHTML = isAuthenticated
+			? `
+				<div style="font-size: 13px; font-weight: 600; color: #111827;">${employeeName}</div>
+				<div style="font-size: 11px; color: #6b7280;">${employeeRole}</div>
+			`
+			: `<div style="font-size: 11px; color: #6b7280;">${employeeRole}</div>`;
 
 		const overlay = new google.maps.OverlayView();
 		overlay.onAdd = function () {
@@ -149,7 +154,7 @@ function DistrictPolygon({
 			overlayRef.current?.setMap(null);
 			overlayRef.current = null;
 		};
-	}, [map, geometryLib, employeeName, employeeRole]);
+	}, [map, geometryLib, employeeName, employeeRole, isAuthenticated]);
 
 	return null;
 }
@@ -157,11 +162,13 @@ function DistrictPolygon({
 function EmployeeMapPopup({
 	employee,
 	open,
-	onOpenChange
+	onOpenChange,
+	isAuthenticated
 }: {
 	employee: Employee;
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
+	isAuthenticated: boolean;
 }) {
 	const { t } = useTranslation();
 	const isLublin = employee.location.toLowerCase() === 'lublin';
@@ -176,7 +183,7 @@ function EmployeeMapPopup({
 				<DialogHeader className="px-6 pt-6 pb-0">
 					<DialogTitle className="flex items-center gap-2 text-gray-900">
 						<MapPin size={18} className="text-primary-blue" />
-						{employee.name} — {employee.location}
+					{isAuthenticated ? employee.name : employee.role} — {employee.location}
 					</DialogTitle>
 				</DialogHeader>
 				<div className="h-100 w-full">
@@ -212,6 +219,8 @@ function EmployeeMapPopup({
 
 export default function SearchResults() {
 	const { t } = useTranslation();
+	const { auth } = useAuth();
+	const isAuthenticated = auth.user !== null;
 	const [searchParams] = useSearchParams();
 	const query = searchParams.get('q')?.trim() || '';
 	const [mapEmployee, setMapEmployee] = useState<Employee | null>(null);
