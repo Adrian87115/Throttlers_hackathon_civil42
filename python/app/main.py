@@ -32,14 +32,13 @@ app.include_router(marketplace.router, prefix = "/marketplace", tags = ["Marketp
 @app.on_event("startup")
 def create_default_owner():
     db: Session = SessionLocal()
+
     owner = db.query(User).filter(User.role == "owner").first()
     if not owner:
         owner = User(username = "owner",
                      email = "owner@example.com",
                      hashed_password = hash_password("owner"),
-                     role = "owner",
-                     is_active = True,
-                     is_verified = True)
+                     role = "owner")
         db.add(owner)
         print("Default owner user created.")
     else:

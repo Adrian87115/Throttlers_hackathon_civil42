@@ -18,7 +18,9 @@ from app.models.marketplace import (
 from app.models.user import AccountType, User
 from app.schemas.marketplace import (
     ApplicationCreate,
+    ApplicationDetailedOut,
     ApplicationOut,
+    ApplicationWorkerOut,
     ApplicationStatusUpdate,
     ContactChannelCreate,
     ContactChannelOut,
@@ -41,12 +43,10 @@ router = APIRouter(tags = ["Marketplace"])
 def _assert_active_account(user: User) -> None:
     if user.is_deleted:
         raise HTTPException(status_code = 403, detail = "Account is deleted")
-    if not user.is_active:
-        raise HTTPException(status_code = 403, detail = "Account is inactive")
 
 
 def _has_gov_access(user: User) -> bool:
-    return user.role in {"gov_service", "admin", "owner"}
+    return user.role in {"gov_service", "owner"}
 
 
 def _is_service_account(user: User) -> bool:
@@ -62,12 +62,12 @@ def _assert_service_owner(user: User, opportunity: Opportunity) -> None:
 
 def _can_view_visibility(visibility: ContactVisibility, requester: User | None, owner_id: int) -> bool:
     if requester is None:
-        return visibility == ContactVisibility.public
+        return False
     if requester.id == owner_id:
         return True
     if visibility == ContactVisibility.public:
         return True
-    if visibility == ContactVisibility.gov_only and _has_gov_access(requester):
+    if visibility == ContactVisibility.private and requester.account_type == AccountType.employer:
         return True
     return False
 
@@ -103,8 +103,8 @@ def create_skill(payload: SkillCreate,
                  db: Session = Depends(get_db),
                  current_user: User = Depends(get_current_user)):
     _assert_active_account(current_user)
-    if current_user.role not in {"admin", "owner"}:
-        raise HTTPException(status_code = 403, detail = "Only admins can create skills")
+    if current_user.role != "owner":
+        raise HTTPException(status_code = 403, detail = "Only owner can create skills")
     existing = db.query(Skill).filter(Skill.name == payload.name).first()
     if existing:
         raise HTTPException(status_code = 400, detail = "Skill already exists")
@@ -121,8 +121,8 @@ def update_skill(skill_id: int,
                  db: Session = Depends(get_db),
                  current_user: User = Depends(get_current_user)):
     _assert_active_account(current_user)
-    if current_user.role not in {"admin", "owner"}:
-        raise HTTPException(status_code = 403, detail = "Only admins can update skills")
+    if current_user.role != "owner":
+        raise HTTPException(status_code = 403, detail = "Only owner can update skills")
 
     skill = db.query(Skill).filter(Skill.id == skill_id).first()
     if not skill:
@@ -149,8 +149,8 @@ def delete_skill(skill_id: int,
                  db: Session = Depends(get_db),
                  current_user: User = Depends(get_current_user)):
     _assert_active_account(current_user)
-    if current_user.role not in {"admin", "owner"}:
-        raise HTTPException(status_code = 403, detail = "Only admins can delete skills")
+    if current_user.role != "owner":
+        raise HTTPException(status_code = 403, detail = "Only owner can delete skills")
 
     skill = db.query(Skill).filter(Skill.id == skill_id).first()
     if not skill:
@@ -232,7 +232,7 @@ def search_workers(skill_ids: list[int] | None = Query(default = None),
         _assert_active_account(current_user)
 
     query = db.query(WorkerProfile).join(User, User.id == WorkerProfile.user_id)
-    query = query.filter(User.is_deleted.is_(False), User.is_active.is_(True), User.is_verified.is_(True))
+    query = query.filter(User.is_deleted.is_(False))
 
     if skill_ids:
         query = query.filter(WorkerProfile.skills.any(Skill.id.in_(skill_ids)))
@@ -362,7 +362,7 @@ def create_opportunity(payload: OpportunityCreate,
     if not employer_profile:
         raise HTTPException(status_code = 404, detail = "Employer profile not found")
     if employer_profile.verification_status != VerificationStatus.approved or not employer_profile.is_verified:
-        raise HTTPException(status_code = 403, detail = "Employer account is not approved by admin")
+        raise HTTPException(status_code = 403, detail = "Employer account is not approved by owner")
 
     skills = []
     if payload.skill_ids:
@@ -554,7 +554,7 @@ def apply_to_opportunity(opportunity_id: int,
     return application
 
 
-@router.get("/opportunities/{opportunity_id}/applications", response_model = list[ApplicationOut])
+@router.get("/opportunities/{opportunity_id}/applications", response_model = list[ApplicationDetailedOut])
 def list_opportunity_applications(opportunity_id: int,
                                   db: Session = Depends(get_db),
                                   current_user: User = Depends(get_current_user)):
@@ -567,7 +567,39 @@ def list_opportunity_applications(opportunity_id: int,
     _assert_service_owner(current_user, opportunity)
 
     applications = db.query(Application).filter(Application.opportunity_id == opportunity_id).order_by(Application.id.desc()).all()
-    return applications
+
+    out: list[ApplicationDetailedOut] = []
+    for application in applications:
+        profile = application.worker_profile
+        channels = db.query(ContactChannel).filter(ContactChannel.user_id == application.worker_id).all()
+        visible_channels = [
+            ContactChannelOut.model_validate(channel)
+            for channel in channels
+            if _can_view_visibility(channel.visibility, current_user, application.worker_id)
+        ]
+        worker_out = ApplicationWorkerOut(
+            user_id = application.worker_id,
+            username = profile.user.username,
+            bio = profile.bio,
+            city = profile.city,
+            region = profile.region,
+            wants_paid = profile.wants_paid,
+            wants_volunteer = profile.wants_volunteer,
+            skills = [SkillOut.model_validate(skill) for skill in profile.skills],
+            contacts = visible_channels,
+        )
+        out.append(
+            ApplicationDetailedOut(
+                id = application.id,
+                opportunity_id = application.opportunity_id,
+                worker_profile_id = application.worker_profile_id,
+                worker_id = application.worker_id,
+                status = application.status,
+                message = application.message,
+                worker = worker_out,
+            )
+        )
+    return out
 
 
 @router.patch("/opportunities/{opportunity_id}/applications/{application_id}/status", response_model = ApplicationOut)

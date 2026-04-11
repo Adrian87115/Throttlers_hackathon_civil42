@@ -30,7 +30,7 @@ def main():
         worker_user_id = sample["user_id"]
         status, contacts = call(f"/marketplace/workers/{worker_user_id}/contacts")
         assert status == 200
-        assert all(channel.get("visibility") == "public" for channel in contacts), "Anonymous should only see public channels"
+        assert len(contacts) == 0, "Anonymous should not see any contact channels"
 
     status, opportunities = call("/marketplace/opportunities", {"city": "Warsaw"})
     assert status == 200

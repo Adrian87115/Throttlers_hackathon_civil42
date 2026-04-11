@@ -63,7 +63,7 @@ class WorkerSkillsUpdate(BaseModel):
 class ContactChannelCreate(BaseModel):
     channel_type: str = Field(min_length = 1, max_length = 50)
     channel_value: str = Field(min_length = 1, max_length = 255)
-    visibility: ContactVisibility = ContactVisibility.gov_only
+    visibility: ContactVisibility = ContactVisibility.private
     is_primary: bool = False
 
 
@@ -143,3 +143,25 @@ class ApplicationOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class ApplicationWorkerOut(BaseModel):
+    user_id: int
+    username: str
+    bio: str | None = None
+    city: str | None = None
+    region: str | None = None
+    wants_paid: bool
+    wants_volunteer: bool
+    skills: list[SkillOut] = []
+    contacts: list[ContactChannelOut] = []
+
+
+class ApplicationDetailedOut(BaseModel):
+    id: int
+    opportunity_id: int
+    worker_profile_id: int
+    worker_id: int
+    status: str
+    message: str | None = None
+    worker: ApplicationWorkerOut

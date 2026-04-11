@@ -47,7 +47,8 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl = "auth/login")
 optional_oauth2_scheme = OAuth2PasswordBearer(tokenUrl = "auth/login", auto_error = False)
 
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
+
+def _decode_user_from_token(token: str, db: Session) -> User:
     credentials_exception = HTTPException(status_code = status.HTTP_401_UNAUTHORIZED, detail = "Invalid credentials", headers = {"WWW-Authenticate": "Bearer"})
     try:
         payload = jwt.decode(token, KEY, algorithms = ALGORITHM)
@@ -59,6 +60,20 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     user = db.query(User).filter(User.id == int(user_id)).first()
     if user is None:
         raise credentials_exception
+    return user
+
+
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
+    user = _decode_user_from_token(token, db)
+    if user.is_deleted:
+        raise HTTPException(status_code = status.HTTP_403_FORBIDDEN, detail = "Account is deleted")
+    return user
+
+
+def get_current_user_allow_inactive(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
+    user = _decode_user_from_token(token, db)
+    if user.is_deleted:
+        raise HTTPException(status_code = status.HTTP_403_FORBIDDEN, detail = "Account is deleted")
     return user
 
 

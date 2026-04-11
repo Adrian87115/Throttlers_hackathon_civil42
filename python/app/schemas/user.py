@@ -29,8 +29,6 @@ class UserPublicOut(BaseModel):
 
 class UserOutAdvanced(UserOut):
     role: str
-    is_active: bool
-    is_verified: bool
     is_deleted: bool
 
     class Config:
@@ -47,8 +45,6 @@ class SafeUserOut(BaseModel):
     role: str
     account_type: str | None = None
     isAuthenticated: bool = True
-    isAdmin: bool = False
-    isModerator: bool = False
     isOwner: bool = False
 
     class Config:

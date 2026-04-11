@@ -7,4 +7,3 @@ pydantic[email]
 python-jose==3.3.0
 passlib[bcrypt]
 python-multipart
-fastapi_mail
