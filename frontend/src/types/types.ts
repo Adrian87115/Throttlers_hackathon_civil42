@@ -21,6 +21,8 @@ export const AppApiPaths = {
 	// auth
 	deleteUser: () => `auth/me`,
 	postAppRefreshToken: () => `auth/refresh-token`,
+	postUserLogin: () => `auth/login`,
+	postUserRegister: () => `auth/register`,
 
 	googleOAuthLogin: () => `auth/google`
 };

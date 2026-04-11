@@ -2,7 +2,9 @@ import BaseButton from '@/components/Buttons/BaseButton';
 import AppLogo from '@/components/icons/AppLogo/AppLogo';
 import BaseSpacer from '@/components/Spacers/BaseSpacer';
 import { Input } from '@/components/ui/input';
-import { AppApiPaths, AppRoutePaths } from '@/types/types';
+import { useAuthenticatedApi } from '@/hooks/useAuthenticatedApi';
+import { handleUserLogin } from '@/services/login';
+import { AppRoutePaths } from '@/types/types';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaGoogle } from 'react-icons/fa';
@@ -18,6 +20,8 @@ export default function Login() {
 
 	const navigate = useNavigate();
 
+	const { callWithToken } = useAuthenticatedApi();
+
 	function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
 		setFormData({
 			...formData,
@@ -25,16 +29,22 @@ export default function Login() {
 		});
 	}
 
-	function handleLogin(e: React.FormEvent<HTMLFormElement>) {
+	async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
 		e.preventDefault();
 
 		console.log(formData);
+		const res = await callWithToken(handleUserLogin, formData);
+
+		console.log(res);
 
 		navigate(AppRoutePaths.mainDashboard());
 	}
 
 	async function handleGoogleLogin() {
-		window.location.href = AppApiPaths.googleOAuthLogin();
+		// window.location.href = AppApiPaths.googleOAuthLogin();
+		alert(
+			'Funkcja logowania przez Google jest obecnie niedostępna. Prosimy o skorzystanie z tradycyjnego logowania.'
+		);
 	}
 
 	return (
