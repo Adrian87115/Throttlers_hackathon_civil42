@@ -1,0 +1,231 @@
+.container {
+  max-width: 1500px;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  height: 600px;
+
+  position: fixed;
+  top: 90px;
+  z-index: 100;
+}
+
+.title {
+  text-align: center;
+  font-size: 2rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.roleSelector {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.roleSelector label {
+  font-weight: 500;
+  font-size: 1rem;
+}
+
+.roleSelector select {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+  background-color: #fff;
+  cursor: pointer;
+  transition: border 0.2s, box-shadow 0.2s;
+}
+
+.roleSelector select:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+.tableWrapper {
+  max-height: 500px;
+  overflow-y: auto;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+.userTable {
+  width: 100%;
+  min-width: 800px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.userTable th,
+.userTable td {
+  padding: 12px 15px;
+  text-align: left;
+  word-wrap: break-word;
+}
+
+.userTable th {
+  background-color: #e9ecef;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.actions button {
+  margin-right: 5px;
+  padding: 6px 12px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.actions button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+p { text-align: center; font-size: 1.1rem; color: #555; }
+
+.banBtn { background-color: #312d2e; color: #fff; }
+.banBtn:hover:not(:disabled) { background-color: #000; }
+
+.deleteBtn { background-color: #dc3545; color: #fff; }
+.deleteBtn:hover:not(:disabled) { background-color: #c82333; }
+
+.roleBtn { background-color: #6c757d; color: #fff; }
+.roleBtn:hover:not(:disabled) { background-color: #5a6268; }
+
+.popupOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.popup {
+  background: #fff;
+  padding: 25px 30px;
+  border-radius: 12px;
+  min-width: 350px;
+  max-width: 90%;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+  text-align: center;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.popup h2 {
+  margin-bottom: 15px;
+  font-size: 1.4rem;
+  color: #333;
+}
+
+.popup select {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
+
+.popupActions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.popupActions button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.popupActions button:first-child {
+  background-color: #28a745;
+  color: white;
+}
+.popupActions button:first-child:hover {
+  background-color: #218838;
+}
+
+.popupActions button:last-child {
+  background-color: #dc3545;
+  color: white;
+}
+.popupActions button:last-child:hover {
+  background-color: #c82333;
+}
+
+.pagination {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+.pagination button {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  background-color: #007bff;
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.pagination button:hover:not(:disabled) {
+  background-color: #0056b3;
+  transform: translateY(-1px);
+}
+
+.pagination button:disabled {
+  background-color: #ccc;
+  color: #666;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.pageInput {
+  width: 50px;
+  text-align: center;
+  padding: 4px 6px;
+  margin: 0 5px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.95rem;
+}
+
+.pageInput:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 4px rgba(0, 123, 255, 0.5);
+}

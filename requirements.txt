@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+sqlalchemy>=2.0,<3.0
+psycopg2-binary
+jinja2
+pydantic[email]
+python-jose==3.3.0
+passlib[bcrypt]
+python-multipart
+fastapi_mail

@@ -1,0 +1,43 @@
+.userWrapper {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.username {
+  color: #3b82f6;
+  font-weight: bold;
+}
+
+.popup {
+  position: absolute;
+  top: 20px;
+  left: 0;
+  background: white;
+  border: 1px solid #ccc;
+  padding: 8px;
+  border-radius: 6px;
+  box-shadow: 0px 2px 8px rgba(0,0,0,0.2);
+  z-index: 100;
+}
+
+.popup p {
+  margin: 4px 0;
+}
+
+.banBtn {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.banBtn:hover {
+  background: #dc2626;
+}
+
+.role {
+  font-size: 12px;
+  color: gray;
+}
