@@ -8,6 +8,8 @@ from datetime import timedelta
 
 from app.db.session import get_db
 from app.models.user import User
+from app.models.user import AccountType
+from app.models.marketplace import WorkerProfile, EmployerProfile
 from app.core.security import verify_password, hash_password, create_access_token, validate_password, create_access_token, get_current_user
 from app.auth.email import create_email_token, decode_email_token, send_verification_email, send_password_reset, is_email
 from app.schemas.user import UserCreate, UserOut
@@ -38,8 +40,15 @@ async def register_user(user_in: UserCreate,
             raise HTTPException(status_code = 400, detail = "Password must consist of: at least 8 characters, at least 1 small letter, at least 1 capital letter, at least 1 number, at least 1 special character")
         user = User(email = user_in.email,
                     username = user_in.username,
-                    hashed_password = hash_password(user_in.password))
+                    hashed_password = hash_password(user_in.password),
+                    account_type = AccountType(user_in.account_type))
         db.add(user)
+        db.flush()
+        if user.account_type == AccountType.worker:
+            db.add(WorkerProfile(user_id = user.id))
+        elif user.account_type == AccountType.employer:
+            db.add(EmployerProfile(user_id = user.id,
+                                   organization_name = user.username))
         db.commit()
         db.refresh(user)
         token = create_email_token({"sub": user.email})

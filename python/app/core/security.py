@@ -10,7 +10,7 @@ import re
 from app.db.session import get_db
 from app.models.user import User
 
-pwd_context = CryptContext(schemes = ["bcrypt"], deprecated = "auto")
+pwd_context = CryptContext(schemes = ["pbkdf2_sha256"], deprecated = "auto")
 
 def hash_password(password: str) -> str:
     return pwd_context.hash(password)
@@ -45,6 +45,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     return encoded_jwt
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl = "auth/login")
+optional_oauth2_scheme = OAuth2PasswordBearer(tokenUrl = "auth/login", auto_error = False)
 
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
     credentials_exception = HTTPException(status_code = status.HTTP_401_UNAUTHORIZED, detail = "Invalid credentials", headers = {"WWW-Authenticate": "Bearer"})
@@ -59,3 +60,17 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     if user is None:
         raise credentials_exception
     return user
+
+
+def get_optional_current_user(token: str | None = Depends(optional_oauth2_scheme),
+                              db: Session = Depends(get_db)) -> User | None:
+    if token is None:
+        return None
+    try:
+        payload = jwt.decode(token, KEY, algorithms = ALGORITHM)
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            return None
+    except JWTError:
+        return None
+    return db.query(User).filter(User.id == int(user_id)).first()

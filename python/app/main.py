@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import users, auth
+from app.routers import users, auth, marketplace
 from app.db.session import engine
 from app.db.base import Base
 from app.models.user import User
@@ -27,6 +27,7 @@ app.add_middleware(CORSMiddleware,
                    allow_headers = ["*"])
 app.include_router(users.router, prefix = "/users", tags = ["Users"])
 app.include_router(auth.router, prefix = "/auth", tags = ["Auth"])
+app.include_router(marketplace.router, prefix = "/marketplace", tags = ["Marketplace"])
 
 @app.on_event("startup")
 def create_default_owner():

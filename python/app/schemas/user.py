@@ -1,4 +1,5 @@
 from pydantic import BaseModel, EmailStr
+from typing import Literal
 
 class UserBase(BaseModel):
     email: EmailStr
@@ -7,10 +8,12 @@ class UserCreate(UserBase):
     username: str
     password: str
     email: EmailStr
+    account_type: Literal["worker", "employer"]
 
 class UserOut(UserBase):
     id: int
     username: str
+    account_type: str | None = None
 
     class Config:
         from_attributes = True
@@ -33,6 +36,7 @@ class SafeUserOut(BaseModel):
     username: str
     email: str
     role: str
+    account_type: str | None = None
     isAuthenticated: bool = True
     isAdmin: bool = False
     isModerator: bool = False

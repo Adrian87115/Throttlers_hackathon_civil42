@@ -19,6 +19,7 @@ def read_user_me(current_user: User = Depends(get_current_user)):
                                 username = current_user.username,
                                 email = current_user.email,
                                 role = current_user.role,
+                                account_type = current_user.account_type.value if current_user.account_type else None,
                                 isAdmin = current_user.role == "admin",
                                 isModerator = current_user.role == "moderator",
                                 isOwner = current_user.role == "owner",)
@@ -132,15 +133,6 @@ def list_users_advanced(db: Session = Depends(get_db),
 def soft_delete_user(db: Session, user: User):
     user.is_deleted = True
     user.is_active = False
-    posts = db.query(Post).filter(Post.owner_id == user.id).all()
-    for post in posts:
-        post.is_deleted = True
-        post.title = "[deleted]"
-        post.content = "[deleted]"
-    comments = db.query(Comment).filter(Comment.owner_id == user.id).all()
-    for comment in comments:
-        comment.is_deleted = True
-        comment.content = "[deleted]"
     db.commit()
 
 @router.delete("/me")
