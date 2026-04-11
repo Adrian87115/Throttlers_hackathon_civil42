@@ -13,7 +13,3 @@ class User(Base):
     role = Column(String, default = "user", nullable = False)
     is_verified = Column(Boolean, default = False, nullable = False)
     is_active = Column(Boolean, default = False, nullable = False)
-    posts = relationship("Post", back_populates = "owner", cascade = "all, delete-orphan")
-    comments = relationship("Comment", back_populates = "owner", cascade = "all, delete-orphan")
-
-from app.models.comment import Comment

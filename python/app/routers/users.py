@@ -8,8 +8,6 @@ from app.schemas.user import UserOut, SafeUserOut
 from app.models.user import User
 from app.core.security import verify_password, hash_password
 from app.schemas.user import UserOutAdvanced
-from app.models.post import Post
-from app.models.comment import Comment
 from app.core.logging_config import logger
 
 router = APIRouter(tags = ["Users"])
