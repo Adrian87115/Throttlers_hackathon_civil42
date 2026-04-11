@@ -44,7 +44,7 @@ def _assert_active_account(user: User) -> None:
 
 
 def _has_gov_access(user: User) -> bool:
-    return user.role in {"gov_service", "admin", "owner"}
+    return user.role in {"gov_service", "owner"}
 
 
 def _is_service_account(user: User) -> bool:
@@ -101,8 +101,8 @@ def create_skill(payload: SkillCreate,
                  db: Session = Depends(get_db),
                  current_user: User = Depends(get_current_user)):
     _assert_active_account(current_user)
-    if current_user.role not in {"admin", "owner"}:
-        raise HTTPException(status_code = 403, detail = "Only admins can create skills")
+    if current_user.role != "owner":
+        raise HTTPException(status_code = 403, detail = "Only owner can create skills")
     existing = db.query(Skill).filter(Skill.name == payload.name).first()
     if existing:
         raise HTTPException(status_code = 400, detail = "Skill already exists")
@@ -119,8 +119,8 @@ def update_skill(skill_id: int,
                  db: Session = Depends(get_db),
                  current_user: User = Depends(get_current_user)):
     _assert_active_account(current_user)
-    if current_user.role not in {"admin", "owner"}:
-        raise HTTPException(status_code = 403, detail = "Only admins can update skills")
+    if current_user.role != "owner":
+        raise HTTPException(status_code = 403, detail = "Only owner can update skills")
 
     skill = db.query(Skill).filter(Skill.id == skill_id).first()
     if not skill:
@@ -147,8 +147,8 @@ def delete_skill(skill_id: int,
                  db: Session = Depends(get_db),
                  current_user: User = Depends(get_current_user)):
     _assert_active_account(current_user)
-    if current_user.role not in {"admin", "owner"}:
-        raise HTTPException(status_code = 403, detail = "Only admins can delete skills")
+    if current_user.role != "owner":
+        raise HTTPException(status_code = 403, detail = "Only owner can delete skills")
 
     skill = db.query(Skill).filter(Skill.id == skill_id).first()
     if not skill:
@@ -360,7 +360,7 @@ def create_opportunity(payload: OpportunityCreate,
     if not employer_profile:
         raise HTTPException(status_code = 404, detail = "Employer profile not found")
     if employer_profile.verification_status != VerificationStatus.approved or not employer_profile.is_verified:
-        raise HTTPException(status_code = 403, detail = "Employer account is not approved by admin")
+        raise HTTPException(status_code = 403, detail = "Employer account is not approved by owner")
 
     skills = []
     if payload.skill_ids:

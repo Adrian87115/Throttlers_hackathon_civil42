@@ -15,7 +15,7 @@ def main():
             """
             SELECT username, role, account_type
             FROM users
-            WHERE username IN ('admin_seed', 'worker_alice', 'worker_bob', 'employer_acme', 'gov_ops')
+            WHERE username IN ('owner_seed', 'worker_alice', 'worker_bob', 'employer_acme', 'gov_ops')
             ORDER BY username
             """,
         )

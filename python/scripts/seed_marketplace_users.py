@@ -6,10 +6,10 @@ from app.core.security import hash_password
 
 USERS = [
     {
-        "username": "admin_seed",
-        "email": "admin_seed@example.com",
+        "username": "owner_seed",
+        "email": "owner_seed@example.com",
         "password": "SeedPass@123",
-        "role": "admin",
+        "role": "owner",
         "account_type": AccountType.employer,
     },
     {

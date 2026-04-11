@@ -219,7 +219,7 @@ def upsert_contact(token, channel_type: str, channel_value: str, visibility: str
 
 
 def setup_baseline_accounts():
-    ensure_seed_actor("admin_seed", "admin_seed@example.com", AccountType.employer, "admin")
+    ensure_seed_actor("owner_seed", "owner_seed@example.com", AccountType.employer, "owner")
     ensure_seed_actor("worker_alice", "worker_alice@example.com", AccountType.worker, "user")
     ensure_seed_actor("worker_bob", "worker_bob@example.com", AccountType.worker, "user")
 
@@ -236,16 +236,16 @@ def main():
     ensure_account_registered(employer_signup, f"{employer_signup}@example.com", "employer")
     ensure_account_registered(service_signup, f"{service_signup}@example.com", "employer")
 
-    admin_token = login("admin_seed", SEED_PASSWORD)
+    owner_token = login("owner_seed", SEED_PASSWORD)
     alice_token = login("worker_alice", SEED_PASSWORD)
     bob_token = login("worker_bob", SEED_PASSWORD)
     worker_signup_token = login(worker_signup, SEED_PASSWORD)
     employer_token = login(employer_signup, SEED_PASSWORD)
     service_candidate_token = login(service_signup, SEED_PASSWORD)
 
-    plumbing_id = upsert_skill(admin_token, "Plumbing", "Trade")
-    driving_id = upsert_skill(admin_token, "Driving", "Service")
-    chainsaw_id = upsert_skill(admin_token, "Chainsaw Operation", "Equipment")
+    plumbing_id = upsert_skill(owner_token, "Plumbing", "Trade")
+    driving_id = upsert_skill(owner_token, "Driving", "Service")
+    chainsaw_id = upsert_skill(owner_token, "Chainsaw Operation", "Equipment")
 
     api_request(
         "PATCH",
@@ -360,7 +360,7 @@ def main():
     )
     login_expect_denied(service_signup, SEED_PASSWORD)
 
-    _, pending = api_request("GET", "/users/admin/verifications/pending", token = admin_token, query = {"target": "all"})
+    _, pending = api_request("GET", "/users/owner/verifications/pending", token = owner_token, query = {"target": "all"})
     pending_by_username = {row["username"]: row["target"] for row in pending}
     assert_true(pending_by_username.get(employer_signup) == "employer", "Employer should be pending verification")
     assert_true(pending_by_username.get(service_signup) == "gov_service", "Service should be pending verification")
@@ -370,14 +370,14 @@ def main():
 
     api_request(
         "PATCH",
-        f"/users/admin/verifications/{employer_user_id}/approve",
-        token = admin_token,
+        f"/users/owner/verifications/{employer_user_id}/approve",
+        token = owner_token,
         json_body = {"target": "employer"},
     )
     api_request(
         "PATCH",
-        f"/users/admin/verifications/{service_user_id}/approve",
-        token = admin_token,
+        f"/users/owner/verifications/{service_user_id}/approve",
+        token = owner_token,
         json_body = {"target": "gov_service"},
     )
 

@@ -45,8 +45,6 @@ class SafeUserOut(BaseModel):
     role: str
     account_type: str | None = None
     isAuthenticated: bool = True
-    isAdmin: bool = False
-    isModerator: bool = False
     isOwner: bool = False
 
     class Config:
