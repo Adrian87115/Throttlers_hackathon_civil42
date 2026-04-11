@@ -31,8 +31,6 @@ export default function Login() {
 	async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
 		e.preventDefault();
 
-		console.log(formData);
-
 		const res = await handleUserLogin(formData);
 
 		setAuthTokens(
