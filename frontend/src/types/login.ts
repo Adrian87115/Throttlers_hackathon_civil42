@@ -1,1 +1,7 @@
-export interface LoginResponseData {}
+export interface LoginResponseData {
+    accessToken: string;
+    refreshToken: string;
+    access_token: string;
+    refresh_token: string;
+    token_type: string;
+}
