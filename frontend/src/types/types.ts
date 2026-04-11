@@ -9,6 +9,7 @@ export const AppRoutePaths = {
 	searchPage: (query?: string) =>
 		`/search${query ? `?q=${encodeURIComponent(query)}` : ''}`,
 	userProfile: () => `/me/profile`,
+	orgProfile: () => `/me/organization`,
 	employeeProfilePage: (id?: string) =>
 		id ? `/profile/${id}` : '/profile/:id',
 	userSettings: () => `/settings`,
@@ -26,7 +27,13 @@ export const AppApiPaths = {
 	postUserRegister: () => `auth/register-user`,
 	postCompanyRegister: () => `auth/register-company`,
 
-	googleOAuthLogin: () => `auth/google`
+	googleOAuthLogin: () => `auth/google`,
+
+	// profile
+	getMyProfile: () => `auth/me/profile`,
+
+	// alerts
+	postOpenHandsAlert: () => `alerts/open-hands`
 };
 
 export const SEARCH_DEBOUNCE_MS = 500;

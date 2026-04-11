@@ -63,7 +63,8 @@ function decodeUserFromToken(token?: AccessToken): {
 		user: {
 			id: decoded.sub,
 			email: decoded.email,
-			nickname: decoded.nickname
+			nickname: decoded.nickname,
+			accountType: decoded.account_type
 		},
 		exp: decoded.exp
 	};

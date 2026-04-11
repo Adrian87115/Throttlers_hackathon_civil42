@@ -11,10 +11,11 @@ from app.core.security import (create_access_token, create_refresh_token,
                                hash_password, validate_password,
                                verify_password)
 from app.db.session import get_db
-from app.models.marketplace import (EmployerProfile, VerificationStatus,
-                                    WorkerProfile)
+from app.models.marketplace import (ContactChannel, EmployerProfile,
+                                    VerificationStatus, WorkerProfile)
 from app.models.user import AccountType, User
-from app.schemas.user import UserCreate, UserOut
+from app.schemas.user import (EmployerProfileMeOut, SkillSummaryOut,
+                              UserCreate, UserOut, WorkerProfileMeOut)
 
 router = APIRouter(tags = ["Auth"])
 
@@ -88,6 +89,103 @@ def _build_username_from_email(email: str, db: Session) -> str:
         suffix += 1
         candidate = f"{base_username}{suffix}"
     return candidate
+
+
+def _parse_key_value_description(description: str | None) -> dict[str, str | None]:
+    parsed = {
+        "nip": None,
+        "regon": None,
+        "org_address": None,
+        "org_phone": None,
+        "contact_person": None,
+        "institution_type": None,
+    }
+    if not description:
+        return parsed
+
+    patterns = {
+        "nip": r"NIP:\s*([^;]+)",
+        "regon": r"REGON:\s*([^;]+)",
+        "org_address": r"Address:\s*([^;]+)",
+        "org_phone": r"Phone:\s*([^;]+)",
+        "contact_person": r"Contact:\s*([^;]+)",
+        "institution_type": r"InstitutionType:\s*([^;]+)",
+    }
+
+    for key, pattern in patterns.items():
+        match = re.search(pattern, description)
+        if match:
+            parsed[key] = match.group(1).strip()
+    return parsed
+
+
+def _extract_phone_from_contact_channels(db: Session, user_id: int) -> str | None:
+    channels = db.query(ContactChannel).filter(ContactChannel.user_id == user_id).all()
+    for channel in channels:
+        if channel.channel_type.lower() in {"phone", "telefon", "tel", "mobile"}:
+            return channel.channel_value
+    return None
+
+
+@router.get("/me/profile", response_model = WorkerProfileMeOut | EmployerProfileMeOut)
+def read_my_profile(db: Session = Depends(get_db),
+                    current_user: User = Depends(get_current_user)):
+    if current_user.is_deleted:
+        raise HTTPException(status_code = 403, detail = "Account is deleted")
+
+    if current_user.account_type == AccountType.worker:
+        worker_profile = db.query(WorkerProfile).filter(WorkerProfile.user_id == current_user.id).first()
+        if not worker_profile:
+            raise HTTPException(status_code = 404, detail = "Worker profile not found")
+
+        skills = [
+            SkillSummaryOut.model_validate(skill)
+            for skill in worker_profile.skills
+        ]
+        primary_category = None
+        if skills:
+            first_skill = skills[0]
+            primary_category = first_skill.category or first_skill.name
+
+        return WorkerProfileMeOut(
+            id = current_user.id,
+            email = current_user.email,
+            username = current_user.username,
+            account_type = "worker",
+            position = worker_profile.bio,
+            category = primary_category,
+            experience_summary = worker_profile.experience_summary,
+            is_available = worker_profile.is_available,
+            skills = skills,
+            phone = _extract_phone_from_contact_channels(db, current_user.id),
+            city = worker_profile.city,
+            district = worker_profile.region,
+        )
+
+    if current_user.account_type == AccountType.employer:
+        employer_profile = db.query(EmployerProfile).filter(EmployerProfile.user_id == current_user.id).first()
+        if not employer_profile:
+            raise HTTPException(status_code = 404, detail = "Employer profile not found")
+
+        parsed_details = _parse_key_value_description(employer_profile.organization_description)
+        return EmployerProfileMeOut(
+            id = current_user.id,
+            email = current_user.email,
+            username = current_user.username,
+            account_type = "employer",
+            organization_name = employer_profile.organization_name,
+            nip = parsed_details["nip"],
+            regon = parsed_details["regon"],
+            org_address = parsed_details["org_address"],
+            org_phone = parsed_details["org_phone"],
+            contact_person = parsed_details["contact_person"],
+            institution_type = parsed_details["institution_type"],
+            is_government_service = employer_profile.is_government_service,
+            is_verified = employer_profile.is_verified,
+            verification_status = employer_profile.verification_status.value,
+        )
+
+    raise HTTPException(status_code = 400, detail = "Unsupported account type")
 
 
 @router.post("/register-user", response_model = UserOut)

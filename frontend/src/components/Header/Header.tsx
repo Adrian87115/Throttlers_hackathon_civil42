@@ -159,7 +159,7 @@ export default function Header() {
 						trigger={
 							<button className="flex items-center gap-2.5 rounded-xl py-1.5 pl-3 pr-1.5 transition-all duration-200 hover:bg-gray-100 cursor-pointer">
 								<span className="text-sm font-medium text-gray-700 hidden sm:block">
-									{user.nickname}
+									{user.email}
 								</span>
 								<UserProfilePicture className="h-8! w-8!" />
 							</button>
@@ -174,7 +174,13 @@ export default function Header() {
 							{
 								icon: <User size={16} />,
 								label: (
-									<Link to={AppRoutePaths.userProfile()} className="w-full">
+									<Link
+										to={
+											user.accountType === 'employer'
+												? AppRoutePaths.orgProfile()
+												: AppRoutePaths.userProfile()
+										}
+										className="w-full">
 										{t('header.profile')}
 									</Link>
 								)

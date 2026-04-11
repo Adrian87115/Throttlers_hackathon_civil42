@@ -1,12 +1,16 @@
+export type AccountType = 'worker' | 'employer';
+
 export type AppUser = {
 	id: string;
 	email: string;
-	nickname: string; // other fields here
+	nickname: string;
+	accountType?: AccountType;
 };
 
 export interface AccessTokenPayload {
 	sub: string;
 	email: string;
 	nickname: string;
-	exp: number; // and other fields
+	account_type?: AccountType;
+	exp: number;
 }
