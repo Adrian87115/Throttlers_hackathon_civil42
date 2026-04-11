@@ -2,6 +2,7 @@ import { GlobalStyles, StyledEngineProvider } from '@mui/material';
 import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import AuthenticatedRoute from './components/Redirects/AuthenticatedRoute';
+import OwnerRoute from './components/Redirects/OwnerRoute';
 import UnauthenticatedRoute from './components/Redirects/UnauthenticatedRoute';
 import AuthUserContext from './contexts/AuthUserContext';
 import './i18n/i18n';
@@ -15,6 +16,7 @@ import Login from './pages/Login/Login';
 import MainDashboard from './pages/MainDashboard/MainDashboard';
 import NotFound from './pages/NotFound/NotFound';
 import OrgProfile from './pages/OrgProfile/OrgProfile';
+import OwnerVerificationAdmin from './pages/OwnerVerificationAdmin/OwnerVerificationAdmin';
 import Register from './pages/Register/Register';
 import SearchResults from './pages/SearchResults/SearchResults';
 import UserProfile from './pages/UserProfile/UserProfile';
@@ -139,6 +141,19 @@ function App() {
 									<BaseLayout>
 										<OrgProfile />
 									</BaseLayout>
+								</AuthenticatedRoute>
+							}
+						/>
+
+						<Route
+							path={AppRoutePaths.ownerVerifications()}
+							element={
+								<AuthenticatedRoute>
+									<OwnerRoute>
+										<BaseLayout>
+											<OwnerVerificationAdmin />
+										</BaseLayout>
+									</OwnerRoute>
 								</AuthenticatedRoute>
 							}
 						/>

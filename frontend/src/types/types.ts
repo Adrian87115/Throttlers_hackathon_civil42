@@ -10,6 +10,7 @@ export const AppRoutePaths = {
 		`/search${query ? `?q=${encodeURIComponent(query)}` : ''}`,
 	userProfile: () => `/me/profile`,
 	orgProfile: () => `/me/organization`,
+	ownerVerifications: () => `/owner/verifications`,
 	employeeProfilePage: (id?: string) =>
 		id ? `/profile/${id}` : '/profile/:id',
 	userSettings: () => `/settings`,
@@ -31,6 +32,13 @@ export const AppApiPaths = {
 
 	// profile
 	getMyProfile: () => `auth/me/profile`,
+	getUserMe: () => `users/me`,
+	getOwnerPendingVerifications: (target: 'all' | 'employer' | 'gov_service' = 'all') =>
+		`users/owner/verifications/pending?target=${target}`,
+	patchOwnerApproveVerification: (userId: number) =>
+		`users/owner/verifications/${userId}/approve`,
+	patchOwnerRejectVerification: (userId: number) =>
+		`users/owner/verifications/${userId}/reject`,
 
 	// alerts
 	postOpenHandsAlert: () => `alerts/open-hands`

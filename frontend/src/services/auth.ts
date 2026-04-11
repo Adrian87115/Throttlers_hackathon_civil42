@@ -24,6 +24,29 @@ interface PostRefreshTokenResponse {
 	refreshToken: RefreshToken;
 }
 
+export interface SafeUserMeResponse {
+	id: number;
+	username: string;
+	email: string;
+	role: string;
+	account_type?: string | null;
+	isAuthenticated: boolean;
+	isOwner: boolean;
+}
+
+export interface PendingVerificationRequest {
+	user_id: number;
+	username: string;
+	email: string;
+	target: 'employer' | 'gov_service';
+	verification_status: string;
+}
+
+interface VerificationActionResponse {
+	detail: string;
+	user_id: number;
+}
+
 export async function postRefreshToken(refreshToken: RefreshToken): Promise<{
 	accessToken: AccessToken;
 	refreshToken: RefreshToken;
@@ -46,4 +69,46 @@ export async function deleteMyAccount(token: AccessToken) {
 	)) as SuccessOnlyResponse;
 
 	return res;
+}
+
+export async function getUserMe(token: AccessToken): Promise<SafeUserMeResponse> {
+	const config: RequestConfig = { token };
+	return (await apiClient.get(AppApiPaths.getUserMe(), config)) as SafeUserMeResponse;
+}
+
+export async function getOwnerPendingVerifications(
+	token: AccessToken,
+	target: 'all' | 'employer' | 'gov_service' = 'all'
+): Promise<PendingVerificationRequest[]> {
+	const config: RequestConfig = { token };
+	return (await apiClient.get(
+		AppApiPaths.getOwnerPendingVerifications(target),
+		config
+	)) as PendingVerificationRequest[];
+}
+
+export async function approveOwnerVerification(
+	token: AccessToken,
+	userId: number,
+	target: 'employer' | 'gov_service'
+): Promise<VerificationActionResponse> {
+	const config: RequestConfig = { token };
+	return (await apiClient.patch(
+		AppApiPaths.patchOwnerApproveVerification(userId),
+		{ target },
+		config
+	)) as VerificationActionResponse;
+}
+
+export async function rejectOwnerVerification(
+	token: AccessToken,
+	userId: number,
+	target: 'employer' | 'gov_service'
+): Promise<VerificationActionResponse> {
+	const config: RequestConfig = { token };
+	return (await apiClient.patch(
+		AppApiPaths.patchOwnerRejectVerification(userId),
+		{ target },
+		config
+	)) as VerificationActionResponse;
 }

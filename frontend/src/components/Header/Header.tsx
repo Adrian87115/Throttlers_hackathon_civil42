@@ -1,4 +1,6 @@
 import { useAuth } from '@/contexts/AuthUserContext';
+import { useAuthenticatedApi } from '@/hooks/useAuthenticatedApi';
+import { getUserMe } from '@/services/auth';
 import { AppRoutePaths } from '@/types/types';
 import {
 	Handshake,
@@ -6,10 +8,11 @@ import {
 	MapPin,
 	Search,
 	Settings,
+	Shield,
 	User,
 	X
 } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { BaseDropdown } from '../Dropdowns/BaseDropdown';
@@ -18,6 +21,7 @@ import UserProfilePicture from '../icons/UserProfilePicture/UserProfilePicture';
 
 export default function Header() {
 	const { getUser, resetAuth } = useAuth();
+	const { callWithToken } = useAuthenticatedApi();
 	const user = getUser();
 	const { t } = useTranslation();
 	const location = useLocation();
@@ -25,7 +29,36 @@ export default function Header() {
 	const navigate = useNavigate();
 	const [search, setSearch] = useState('');
 	const [searchOpen, setSearchOpen] = useState(false);
+	const [isOwner, setIsOwner] = useState(false);
 	const searchRef = useRef<HTMLInputElement>(null);
+
+	useEffect(() => {
+		let isCancelled = false;
+
+		async function resolveOwner() {
+			if (!user) {
+				setIsOwner(false);
+				return;
+			}
+
+			try {
+				const me = await callWithToken(getUserMe);
+				if (!isCancelled) {
+					setIsOwner(me.role === 'owner' || me.isOwner === true);
+				}
+			} catch {
+				if (!isCancelled) {
+					setIsOwner(false);
+				}
+			}
+		}
+
+		resolveOwner();
+
+		return () => {
+			isCancelled = true;
+		};
+	}, [callWithToken, user]);
 
 	function handleLogout() {
 		resetAuth();
@@ -193,6 +226,20 @@ export default function Header() {
 									</Link>
 								)
 							},
+							...(isOwner
+								? [
+										{
+											icon: <Shield size={16} />,
+											label: (
+												<Link
+													to={AppRoutePaths.ownerVerifications()}
+													className="w-full">
+													Panel właściciela
+												</Link>
+											)
+										}
+									]
+								: []),
 							{ separator: true },
 							{
 								icon: <LogOut size={16} />,
