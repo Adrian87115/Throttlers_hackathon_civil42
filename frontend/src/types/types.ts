@@ -16,7 +16,9 @@ export const AppRoutePaths = {
 	userSettings: () => `/settings`,
 	employees: () => `/employees`,
 	volunteers: () => `/volunteers`,
-	volunteerSignup: () => `/volunteers/signup`
+	volunteerSignup: () => `/volunteers/signup`,
+
+	crisis: () => `/crisis`
 };
 
 export const AppApiPaths = {
@@ -41,6 +43,14 @@ export const AppApiPaths = {
 		`users/owner/verifications/${userId}/approve`,
 	patchOwnerRejectVerification: (userId: number) =>
 		`users/owner/verifications/${userId}/reject`,
+
+	// crisis
+	getActiveCrisis: () => `crisis/active`,
+	postStartCrisis: () => `crisis/start`,
+	postEndCrisis: (crisisId: number) => `crisis/${crisisId}/end`,
+	postCrisisRequest: (crisisId: number) => `crisis/${crisisId}/requests`,
+	getCrisisResponders: (crisisId: number) => `crisis/${crisisId}/responders`,
+	postCrisisNotify: (crisisId: number) => `crisis/${crisisId}/notify`,
 
 	// alerts
 	postOpenHandsAlert: () => `alerts/open-hands`

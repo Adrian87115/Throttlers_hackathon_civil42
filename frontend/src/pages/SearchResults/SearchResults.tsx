@@ -183,7 +183,8 @@ function EmployeeMapPopup({
 				<DialogHeader className="px-6 pt-6 pb-0">
 					<DialogTitle className="flex items-center gap-2 text-gray-900">
 						<MapPin size={18} className="text-primary-blue" />
-					{isAuthenticated ? employee.name : employee.role} — {employee.location}
+						{isAuthenticated ? employee.name : employee.role} —{' '}
+						{employee.location}
 					</DialogTitle>
 				</DialogHeader>
 				<div className="h-100 w-full">
@@ -200,6 +201,7 @@ function EmployeeMapPopup({
 								fullscreenControl={false}>
 								{isLublin && (
 									<DistrictPolygon
+										isAuthenticated={isAuthenticated}
 										employeeName={employee.name}
 										employeeRole={employee.role}
 									/>
@@ -318,6 +320,7 @@ export default function SearchResults() {
 
 			{mapEmployee && (
 				<EmployeeMapPopup
+					isAuthenticated={isAuthenticated}
 					employee={mapEmployee}
 					open={!!mapEmployee}
 					onOpenChange={(open) => {

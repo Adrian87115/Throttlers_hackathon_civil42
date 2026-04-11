@@ -3,6 +3,7 @@ import { useAuthenticatedApi } from '@/hooks/useAuthenticatedApi';
 import { getUserMe } from '@/services/auth';
 import { AppRoutePaths } from '@/types/types';
 import {
+	AlertTriangle,
 	Handshake,
 	LogOut,
 	MapPin,
@@ -101,12 +102,18 @@ export default function Header() {
 			to: AppRoutePaths.volunteers(),
 			label: t('header.volunteers'),
 			icon: <Handshake size={16} />
+		},
+		{
+			to: AppRoutePaths.crisis(),
+			label: 'Kryzys',
+			icon: <AlertTriangle size={16} />,
+			isCrisis: true
 		}
 	];
 
 	return (
 		<header className="fixed top-0 z-100 w-full border-b border-gray-400/40 bg-white/80 backdrop-blur-xl">
-			<div className="mx-auto flex h-16 max-w-7xl items-center px-6 gap-2">
+			<div className="mx-auto flex h-16 max-w-8xl items-center px-6 gap-2">
 				{/* Logo */}
 				<Link
 					to={AppRoutePaths.mainDashboard()}
@@ -118,14 +125,17 @@ export default function Header() {
 				<nav className="hidden sm:flex items-center gap-1">
 					{navLinks.map((link) => {
 						const isActive = location.pathname === link.to;
+						const isCrisis = (link as { isCrisis?: boolean }).isCrisis;
 						return (
 							<Link
-								key={link.to}
+								key={`${link.to}-${link.label}`}
 								to={link.to}
 								className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-									isActive
-										? 'bg-primary-blue/10 text-primary-blue'
-										: 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
+									isCrisis
+										? 'bg-red-600 text-white hover:bg-red-700 shadow-sm'
+										: isActive
+											? 'bg-primary-blue/10 text-primary-blue'
+											: 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
 								}`}>
 								{link.icon}
 								{link.label}

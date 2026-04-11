@@ -1,14 +1,13 @@
 from fastapi import FastAPI, Request
-from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.orm import Session
 
-from app.routers import users, auth, marketplace
-from app.db.session import engine
-from app.db.base import Base
-from app.models.user import User
-from app.core.security import hash_password
-from app.db.session import SessionLocal
 from app.core.logging_middleware import LoggingMiddleware
+from app.core.security import hash_password
+from app.db.base import Base
+from app.db.session import SessionLocal, engine
+from app.models.user import User
+from app.routers import auth, crisis, marketplace, users
 
 # 400 - bad request
 # 401 - unauthorized error
@@ -35,11 +34,13 @@ app.add_middleware(CORSMiddleware,
 app.include_router(users.router, prefix = "/users", tags = ["Users"])
 app.include_router(auth.router, prefix = "/auth", tags = ["Auth"])
 app.include_router(marketplace.router, prefix = "/marketplace", tags = ["Marketplace"])
+app.include_router(crisis.router, prefix = "/crisis", tags = ["Crisis"])
 
 # Compatibility mounts for clients configured with a /api base URL.
 app.include_router(users.router, prefix = "/api/users", tags = ["Users"])
 app.include_router(auth.router, prefix = "/api/auth", tags = ["Auth"])
 app.include_router(marketplace.router, prefix = "/api/marketplace", tags = ["Marketplace"])
+app.include_router(crisis.router, prefix = "/api/crisis", tags = ["Crisis"])
 
 @app.on_event("startup")
 def create_default_owner():

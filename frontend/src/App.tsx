@@ -14,6 +14,7 @@ import EmployeeProfile from './pages/EmployeeProfile/EmployeeProfile';
 import Employees from './pages/Employees/Employees';
 import Login from './pages/Login/Login';
 import MainDashboard from './pages/MainDashboard/MainDashboard';
+import Crisis from './pages/Crisis/Crisis';
 import NotFound from './pages/NotFound/NotFound';
 import OrgProfile from './pages/OrgProfile/OrgProfile';
 import OwnerVerificationAdmin from './pages/OwnerVerificationAdmin/OwnerVerificationAdmin';
@@ -164,6 +165,17 @@ function App() {
 								<UnauthenticatedRoute>
 									<Register />
 								</UnauthenticatedRoute>
+							}
+						/>
+
+						<Route
+							path={AppRoutePaths.crisis()}
+							element={
+								<AuthenticatedRoute>
+									<BaseLayout>
+										<Crisis />
+									</BaseLayout>
+								</AuthenticatedRoute>
 							}
 						/>
 
