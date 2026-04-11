@@ -2,7 +2,7 @@ import re
 from datetime import timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from pydantic import BaseModel, EmailStr, model_validator
+from pydantic import BaseModel, EmailStr, field_validator, model_validator
 from sqlalchemy.orm import Session
 
 from app.core.logging_config import logger
@@ -63,6 +63,22 @@ class RegisterCompanyRequest(BaseModel):
     orgPhone: str
     contactPerson: str
     institutionType: str | None = None
+
+    @field_validator("nip")
+    @classmethod
+    def validate_nip(cls, value: str):
+        cleaned = value.strip()
+        if not cleaned.isdigit() or len(cleaned) != 10:
+            raise ValueError("nip must be exactly 10 digits")
+        return cleaned
+
+    @field_validator("regon")
+    @classmethod
+    def validate_regon(cls, value: str):
+        cleaned = value.strip()
+        if not cleaned.isdigit() or len(cleaned) not in {9, 14}:
+            raise ValueError("regon must be 9 or 14 digits")
+        return cleaned
 
     @model_validator(mode = "after")
     def validate_password_confirmation(self):

@@ -555,91 +555,100 @@ export default function UserProfile() {
 					</section>
 				)}
 
-				{/* Skills */}
-				<BaseDimmedBackground>
-					<h2 className="text-lg font-semibold text-gray-900 mb-3">
-						Kwalifikacje i umiejętności
-					</h2>
-					{editing ? (
-						<textarea
-							className="w-full rounded-lg border border-dimmed-blue bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-300 focus:ring-[3px] focus:ring-dimmed-blue resize-none min-h-[120px]"
-							placeholder="Opisz swoje kwalifikacje, certyfikaty, umiejętności..."
-							value={draft.skills || ''}
-							onChange={(e) => updateDraft('skills', e.target.value)}
-							rows={5}
-						/>
-					) : profile.skills ? (
-						<p className="text-sm text-gray-600 whitespace-pre-line leading-relaxed">
-							{profile.skills}
-						</p>
-					) : (
-						<p className="text-sm text-gray-400 italic">
-							Brak kwalifikacji — kliknij &quot;Edytuj&quot; aby dodać
-						</p>
-					)}
-				</BaseDimmedBackground>
-
-				<BaseDimmedBackground>
-					<h2 className="text-lg font-semibold text-gray-900 mb-3">
-						Dokumenty PDF
-					</h2>
-					<p className="text-sm text-gray-600 mb-4">
-						Dodaj CV, certyfikaty oraz rekomendacje (mock upload przez alert).
-					</p>
-
-					<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-						<div className="space-y-2">
-							<p className="text-sm font-medium text-gray-900">CV</p>
-							<Input
-								type="file"
-								accept=".pdf,application/pdf"
-								onChange={(e) => handleMockPdfUpload('cv', e.target.files)}
-								className="text-gray-900 file:mr-3 file:rounded-md file:border-0 file:bg-primary-blue/10 file:px-2 file:py-1 file:text-primary-blue"
-							/>
-							{pdfFiles.cv && (
-								<p className="text-xs text-gray-500 truncate">
-									{pdfFiles.cv.name}
+				{!isEmployer && (
+					<>
+						{/* Skills */}
+						<BaseDimmedBackground>
+							<h2 className="text-lg font-semibold text-gray-900 mb-3">
+								Kwalifikacje i umiejętności
+							</h2>
+							{editing ? (
+								<textarea
+									className="w-full rounded-lg border border-dimmed-blue bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-300 focus:ring-[3px] focus:ring-dimmed-blue resize-none min-h-[120px]"
+									placeholder="Opisz swoje kwalifikacje, certyfikaty, umiejętności..."
+									value={draft.skills || ''}
+									onChange={(e) => updateDraft('skills', e.target.value)}
+									rows={5}
+								/>
+							) : profile.skills ? (
+								<p className="text-sm text-gray-600 whitespace-pre-line leading-relaxed">
+									{profile.skills}
+								</p>
+							) : (
+								<p className="text-sm text-gray-400 italic">
+									Brak kwalifikacji — kliknij &quot;Edytuj&quot; aby dodać
 								</p>
 							)}
-						</div>
+						</BaseDimmedBackground>
 
-						<div className="space-y-2">
-							<p className="text-sm font-medium text-gray-900">Certyfikaty</p>
-							<Input
-								type="file"
-								multiple
-								accept=".pdf,application/pdf"
-								onChange={(e) =>
-									handleMockPdfUpload('certificates', e.target.files)
-								}
-								className="text-gray-900 file:mr-3 file:rounded-md file:border-0 file:bg-primary-blue/10 file:px-2 file:py-1 file:text-primary-blue"
-							/>
-							{pdfFiles.certificates.length > 0 && (
-								<p className="text-xs text-gray-500 truncate">
-									{pdfFiles.certificates.length} plik(ow)
-								</p>
-							)}
-						</div>
+						<BaseDimmedBackground>
+							<h2 className="text-lg font-semibold text-gray-900 mb-3">
+								Dokumenty PDF
+							</h2>
+							<p className="text-sm text-gray-600 mb-4">
+								Dodaj CV, certyfikaty oraz rekomendacje (mock upload przez
+								alert).
+							</p>
 
-						<div className="space-y-2">
-							<p className="text-sm font-medium text-gray-900">Rekomendacje</p>
-							<Input
-								type="file"
-								multiple
-								accept=".pdf,application/pdf"
-								onChange={(e) =>
-									handleMockPdfUpload('recommendations', e.target.files)
-								}
-								className="text-gray-900 file:mr-3 file:rounded-md file:border-0 file:bg-primary-blue/10 file:px-2 file:py-1 file:text-primary-blue"
-							/>
-							{pdfFiles.recommendations.length > 0 && (
-								<p className="text-xs text-gray-500 truncate">
-									{pdfFiles.recommendations.length} plik(ow)
-								</p>
-							)}
-						</div>
-					</div>
-				</BaseDimmedBackground>
+							<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+								<div className="space-y-2">
+									<p className="text-sm font-medium text-gray-900">CV</p>
+									<Input
+										type="file"
+										accept=".pdf,application/pdf"
+										onChange={(e) => handleMockPdfUpload('cv', e.target.files)}
+										className="text-gray-900 file:mr-3 file:rounded-md file:border-0 file:bg-primary-blue/10 file:px-2 file:py-1 file:text-primary-blue"
+									/>
+									{pdfFiles.cv && (
+										<p className="text-xs text-gray-500 truncate">
+											{pdfFiles.cv.name}
+										</p>
+									)}
+								</div>
+
+								<div className="space-y-2">
+									<p className="text-sm font-medium text-gray-900">
+										Certyfikaty
+									</p>
+									<Input
+										type="file"
+										multiple
+										accept=".pdf,application/pdf"
+										onChange={(e) =>
+											handleMockPdfUpload('certificates', e.target.files)
+										}
+										className="text-gray-900 file:mr-3 file:rounded-md file:border-0 file:bg-primary-blue/10 file:px-2 file:py-1 file:text-primary-blue"
+									/>
+									{pdfFiles.certificates.length > 0 && (
+										<p className="text-xs text-gray-500 truncate">
+											{pdfFiles.certificates.length} plik(ow)
+										</p>
+									)}
+								</div>
+
+								<div className="space-y-2">
+									<p className="text-sm font-medium text-gray-900">
+										Rekomendacje
+									</p>
+									<Input
+										type="file"
+										multiple
+										accept=".pdf,application/pdf"
+										onChange={(e) =>
+											handleMockPdfUpload('recommendations', e.target.files)
+										}
+										className="text-gray-900 file:mr-3 file:rounded-md file:border-0 file:bg-primary-blue/10 file:px-2 file:py-1 file:text-primary-blue"
+									/>
+									{pdfFiles.recommendations.length > 0 && (
+										<p className="text-xs text-gray-500 truncate">
+											{pdfFiles.recommendations.length} plik(ow)
+										</p>
+									)}
+								</div>
+							</div>
+						</BaseDimmedBackground>
+					</>
+				)}
 			</div>
 		</BaseContentWrapper>
 	);
