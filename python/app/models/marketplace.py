@@ -22,7 +22,6 @@ from app.db.base import Base
 
 class ContactVisibility(str, enum.Enum):
     public = "public"
-    gov_only = "gov_only"
     private = "private"
 
 
@@ -83,7 +82,7 @@ class WorkerProfile(Base):
     contact_visibility = Column(
         Enum(ContactVisibility, name = "contact_visibility"),
         nullable = False,
-        default = ContactVisibility.gov_only,
+        default = ContactVisibility.private,
     )
 
     is_available = Column(Boolean, nullable = False, default = True)
@@ -135,7 +134,7 @@ class ContactChannel(Base):
     visibility = Column(
         Enum(ContactVisibility, name = "contact_channel_visibility"),
         nullable = False,
-        default = ContactVisibility.gov_only,
+        default = ContactVisibility.private,
     )
     is_primary = Column(Boolean, nullable = False, default = False)
     created_at = Column(DateTime(timezone = True), nullable = False, server_default = func.now())
