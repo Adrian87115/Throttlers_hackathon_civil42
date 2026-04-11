@@ -1,0 +1,13 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "civil42-postgres",
+      "Group": "Servers",
+      "Host": "db",
+      "Port": 5432,
+      "MaintenanceDB": "our_app_db",
+      "Username": "app_user",
+      "SSLMode": "prefer"
+    }
+  }
+}
