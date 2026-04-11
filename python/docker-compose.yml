@@ -21,7 +21,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: postgresql://app_user:87115@db:5432/blog_api_db
+      DATABASE_URL: postgresql://postgres:8711@localhost:5432/civil42_db
     volumes:
       - .:/code
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
