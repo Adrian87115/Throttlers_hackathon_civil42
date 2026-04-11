@@ -21,6 +21,10 @@ export default function Register() {
 		email: '',
 		password: '',
 		confirmPassword: '',
+		// user fields
+		city: '',
+		district: '',
+		phone: '',
 		// org fields
 		orgName: '',
 		nip: '',
@@ -63,7 +67,10 @@ export default function Register() {
 				await apiClient.post(AppApiPaths.postUserRegister(), {
 					email: formData.email,
 					password: formData.password,
-					confirmPassword: formData.confirmPassword
+					confirmPassword: formData.confirmPassword,
+					city: formData.city,
+					district: formData.district,
+					phone: formData.phone
 				});
 			} else {
 				await apiClient.post(AppApiPaths.postCompanyRegister(), {
@@ -188,6 +195,44 @@ export default function Register() {
 									autoComplete="new-password"
 								/>
 							</div>
+
+							{accountType === 'user' && (
+								<>
+									<BaseSpacer className="my-2 w-full" />
+
+									<div className="flex flex-col gap-1">
+										<label>Miasto</label>
+										<Input
+											value={formData.city}
+											onChange={handleChange}
+											name="city"
+											placeholder="np. Lublin"
+										/>
+									</div>
+
+									<div className="flex flex-col gap-1">
+										<label>Dzielnica</label>
+										<Input
+											value={formData.district}
+											onChange={handleChange}
+											name="district"
+											placeholder="np. Śródmieście"
+										/>
+									</div>
+
+									<div className="flex flex-col gap-1">
+										<label>Telefon komórkowy</label>
+										<Input
+											value={formData.phone}
+											type="tel"
+											onChange={handleChange}
+											name="phone"
+											autoComplete="tel"
+											placeholder="+48 123 456 789"
+										/>
+									</div>
+								</>
+							)}
 
 							{/* Organization fields */}
 							{accountType === 'organization' && (

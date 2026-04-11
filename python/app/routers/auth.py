@@ -11,11 +11,11 @@ from app.core.security import (create_access_token, create_refresh_token,
                                hash_password, validate_password,
                                verify_password)
 from app.db.session import get_db
-from app.models.marketplace import (ContactChannel, EmployerProfile,
-                                    VerificationStatus, WorkerProfile)
+from app.models.marketplace import (EmployerProfile, Skill, VerificationStatus,
+                                    WorkerProfile)
 from app.models.user import AccountType, User
-from app.schemas.user import (EmployerProfileMeOut, SkillSummaryOut,
-                              UserCreate, UserOut, WorkerProfileMeOut)
+from app.schemas.user import (ProfileUpdateRequest, SkillSummaryOut,
+                              UnifiedProfileMeOut, UserOut)
 
 router = APIRouter(tags = ["Auth"])
 
@@ -38,6 +38,16 @@ class TokenPairResponse(BaseModel):
 class RegisterUserRequest(BaseModel):
     email: EmailStr
     password: str
+    confirmPassword: str
+    city: str | None = None
+    district: str | None = None
+    phone: str | None = None
+
+    @model_validator(mode = "after")
+    def validate_password_confirmation(self):
+        if self.password != self.confirmPassword:
+            raise ValueError("Passwords do not match")
+        return self
 
 
 class RegisterCompanyRequest(BaseModel):
@@ -119,71 +129,181 @@ def _parse_key_value_description(description: str | None) -> dict[str, str | Non
     return parsed
 
 
-def _extract_phone_from_contact_channels(db: Session, user_id: int) -> str | None:
-    channels = db.query(ContactChannel).filter(ContactChannel.user_id == user_id).all()
-    for channel in channels:
-        if channel.channel_type.lower() in {"phone", "telefon", "tel", "mobile"}:
-            return channel.channel_value
-    return None
+def _resolve_skills(db: Session, skills_value: str | list[str] | None) -> list[Skill]:
+    if skills_value is None:
+        return []
+
+    if isinstance(skills_value, str):
+        skill_names = [part.strip() for part in skills_value.split(",") if part.strip()]
+    else:
+        skill_names = [part.strip() for part in skills_value if part and part.strip()]
+
+    resolved_skills: list[Skill] = []
+    for skill_name in skill_names:
+        skill = db.query(Skill).filter(Skill.name == skill_name).first()
+        if skill is None:
+            skill = Skill(name = skill_name)
+            db.add(skill)
+            db.flush()
+        resolved_skills.append(skill)
+    return resolved_skills
 
 
-@router.get("/me/profile", response_model = WorkerProfileMeOut | EmployerProfileMeOut)
+def _serialize_worker_profile(current_user: User, worker_profile: WorkerProfile) -> UnifiedProfileMeOut:
+    return UnifiedProfileMeOut(
+        id = current_user.id,
+        email = current_user.email,
+        username = current_user.username,
+        account_type = "user",
+        first_name = worker_profile.first_name,
+        last_name = worker_profile.last_name,
+        phone = current_user.phone,
+        city = current_user.city,
+        district = current_user.district,
+        skills = [SkillSummaryOut.model_validate(skill) for skill in worker_profile.skills],
+        experience_years = worker_profile.experience_years,
+        category = worker_profile.category,
+        role = worker_profile.role,
+        available = worker_profile.is_available,
+        organization_name = None,
+        nip = None,
+        regon = None,
+        org_address = None,
+        org_phone = None,
+        contact_person = None,
+        institution_type = None,
+        is_government_service = None,
+        is_verified = None,
+        verification_status = None,
+    )
+
+
+def _serialize_employer_profile(current_user: User, employer_profile: EmployerProfile) -> UnifiedProfileMeOut:
+    parsed_details = _parse_key_value_description(employer_profile.organization_description)
+    return UnifiedProfileMeOut(
+        id = current_user.id,
+        email = current_user.email,
+        username = current_user.username,
+        account_type = "employer",
+        first_name = None,
+        last_name = None,
+        phone = current_user.phone,
+        city = current_user.city,
+        district = current_user.district,
+        skills = [],
+        experience_years = None,
+        category = None,
+        role = None,
+        available = None,
+        organization_name = employer_profile.organization_name,
+        nip = employer_profile.nip or parsed_details["nip"],
+        regon = employer_profile.regon or parsed_details["regon"],
+        org_address = employer_profile.org_address or parsed_details["org_address"],
+        org_phone = employer_profile.org_phone or parsed_details["org_phone"],
+        contact_person = employer_profile.contact_person or parsed_details["contact_person"],
+        institution_type = employer_profile.institution_type or parsed_details["institution_type"],
+        is_government_service = employer_profile.is_government_service,
+        is_verified = employer_profile.is_verified,
+        verification_status = employer_profile.verification_status.value,
+    )
+
+
+def _serialize_current_profile(current_user: User, db: Session) -> UnifiedProfileMeOut:
+    if current_user.account_type == AccountType.worker:
+        worker_profile = db.query(WorkerProfile).filter(WorkerProfile.user_id == current_user.id).first()
+        if not worker_profile:
+            raise HTTPException(status_code = 404, detail = "Worker profile not found")
+        return _serialize_worker_profile(current_user, worker_profile)
+
+    if current_user.account_type == AccountType.employer:
+        employer_profile = db.query(EmployerProfile).filter(EmployerProfile.user_id == current_user.id).first()
+        if not employer_profile:
+            raise HTTPException(status_code = 404, detail = "Employer profile not found")
+        return _serialize_employer_profile(current_user, employer_profile)
+
+    raise HTTPException(status_code = 400, detail = "Unsupported account type")
+
+
+@router.get("/me/profile", response_model = UnifiedProfileMeOut)
 def read_my_profile(db: Session = Depends(get_db),
                     current_user: User = Depends(get_current_user)):
     if current_user.is_deleted:
         raise HTTPException(status_code = 403, detail = "Account is deleted")
+    return _serialize_current_profile(current_user, db)
+
+
+@router.patch("/me/profile", response_model = UnifiedProfileMeOut)
+def update_my_profile(payload: ProfileUpdateRequest,
+                      db: Session = Depends(get_db),
+                      current_user: User = Depends(get_current_user)):
+    if current_user.is_deleted:
+        raise HTTPException(status_code = 403, detail = "Account is deleted")
+
+    updates = payload.model_dump(exclude_unset = True)
+
+    if "username" in updates:
+        new_username = updates["username"]
+        if new_username is not None:
+            existing_user = db.query(User).filter(User.username == new_username, User.id != current_user.id).first()
+            if existing_user:
+                raise HTTPException(status_code = 400, detail = "Username is taken")
+        current_user.username = new_username
+
+    for field_name in ("phone", "city", "district"):
+        if field_name in updates:
+            setattr(current_user, field_name, updates[field_name])
 
     if current_user.account_type == AccountType.worker:
         worker_profile = db.query(WorkerProfile).filter(WorkerProfile.user_id == current_user.id).first()
         if not worker_profile:
             raise HTTPException(status_code = 404, detail = "Worker profile not found")
 
-        skills = [
-            SkillSummaryOut.model_validate(skill)
-            for skill in worker_profile.skills
-        ]
-        primary_category = None
-        if skills:
-            first_skill = skills[0]
-            primary_category = first_skill.category or first_skill.name
+        worker_field_map = {
+            "first_name": "first_name",
+            "last_name": "last_name",
+            "role": "role",
+            "experience_years": "experience_years",
+            "category": "category",
+            "available": "is_available",
+        }
+        for request_field, model_field in worker_field_map.items():
+            if request_field in updates:
+                setattr(worker_profile, model_field, updates[request_field])
 
-        return WorkerProfileMeOut(
-            id = current_user.id,
-            email = current_user.email,
-            username = current_user.username,
-            account_type = "worker",
-            position = worker_profile.bio,
-            category = primary_category,
-            experience_summary = worker_profile.experience_summary,
-            is_available = worker_profile.is_available,
-            skills = skills,
-            phone = _extract_phone_from_contact_channels(db, current_user.id),
-            city = worker_profile.city,
-            district = worker_profile.region,
-        )
+        if "skills" in updates:
+            worker_profile.skills = _resolve_skills(db, updates["skills"])
+
+        db.add(worker_profile)
+        db.add(current_user)
+        db.commit()
+        db.refresh(current_user)
+        db.refresh(worker_profile)
+        return _serialize_worker_profile(current_user, worker_profile)
 
     if current_user.account_type == AccountType.employer:
         employer_profile = db.query(EmployerProfile).filter(EmployerProfile.user_id == current_user.id).first()
         if not employer_profile:
             raise HTTPException(status_code = 404, detail = "Employer profile not found")
 
-        parsed_details = _parse_key_value_description(employer_profile.organization_description)
-        return EmployerProfileMeOut(
-            id = current_user.id,
-            email = current_user.email,
-            username = current_user.username,
-            account_type = "employer",
-            organization_name = employer_profile.organization_name,
-            nip = parsed_details["nip"],
-            regon = parsed_details["regon"],
-            org_address = parsed_details["org_address"],
-            org_phone = parsed_details["org_phone"],
-            contact_person = parsed_details["contact_person"],
-            institution_type = parsed_details["institution_type"],
-            is_government_service = employer_profile.is_government_service,
-            is_verified = employer_profile.is_verified,
-            verification_status = employer_profile.verification_status.value,
-        )
+        employer_field_map = {
+            "organization_name": "organization_name",
+            "nip": "nip",
+            "regon": "regon",
+            "org_address": "org_address",
+            "org_phone": "org_phone",
+            "contact_person": "contact_person",
+            "institution_type": "institution_type",
+        }
+        for request_field, model_field in employer_field_map.items():
+            if request_field in updates:
+                setattr(employer_profile, model_field, updates[request_field])
+
+        db.add(employer_profile)
+        db.add(current_user)
+        db.commit()
+        db.refresh(current_user)
+        db.refresh(employer_profile)
+        return _serialize_employer_profile(current_user, employer_profile)
 
     raise HTTPException(status_code = 400, detail = "Unsupported account type")
 
@@ -204,7 +324,10 @@ async def register_basic_user(user_in: RegisterUserRequest,
         user = User(email = user_in.email,
                     username = generated_username,
                     hashed_password = hash_password(user_in.password),
-                    account_type = AccountType.worker)
+                    account_type = AccountType.worker,
+                    city = user_in.city,
+                    district = user_in.district,
+                    phone = user_in.phone)
         db.add(user)
         db.flush()
         db.add(WorkerProfile(user_id = user.id))
@@ -246,7 +369,8 @@ async def register_company(company_in: RegisterCompanyRequest,
         user = User(email = company_in.email,
                     username = normalized_org_name,
                     hashed_password = hash_password(company_in.password),
-                    account_type = AccountType.employer)
+                    account_type = AccountType.employer,
+                    phone = company_in.orgPhone)
         db.add(user)
         db.flush()
 
@@ -258,6 +382,12 @@ async def register_company(company_in: RegisterCompanyRequest,
         )
         db.add(EmployerProfile(user_id = user.id,
                                organization_name = normalized_org_name,
+                               nip = company_in.nip,
+                               regon = company_in.regon,
+                               org_address = company_in.orgAddress,
+                               org_phone = company_in.orgPhone,
+                               contact_person = company_in.contactPerson,
+                               institution_type = company_in.institutionType,
                                organization_description = details,
                                is_government_service = is_government_service,
                                is_verified = False,

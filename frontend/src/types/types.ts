@@ -31,6 +31,7 @@ export const AppApiPaths = {
 
 	// profile
 	getMyProfile: () => `auth/me/profile`,
+	patchMyProfile: () => `auth/me/profile`,
 
 	// alerts
 	postOpenHandsAlert: () => `alerts/open-hands`

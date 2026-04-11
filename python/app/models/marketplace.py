@@ -1,21 +1,9 @@
-from sqlalchemy import (
-    Boolean,
-    CheckConstraint,
-    Column,
-    DateTime,
-    Enum,
-    Float,
-    ForeignKey,
-    Index,
-    Integer,
-    String,
-    Table,
-    Text,
-    UniqueConstraint,
-    func,
-)
-from sqlalchemy.orm import relationship
 import enum
+
+from sqlalchemy import (Boolean, CheckConstraint, Column, DateTime, Enum,
+                        Float, ForeignKey, Index, Integer, String, Table, Text,
+                        UniqueConstraint, func)
+from sqlalchemy.orm import relationship
 
 from app.db.base import Base
 
@@ -67,6 +55,12 @@ class WorkerProfile(Base):
     id = Column(Integer, primary_key = True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete = "CASCADE"), unique = True, nullable = False, index = True)
 
+    first_name = Column(String(120), nullable = True)
+    last_name = Column(String(120), nullable = True)
+    role = Column(String(160), nullable = True)
+    category = Column(String(160), nullable = True)
+    experience_years = Column(Integer, nullable = True)
+
     bio = Column(Text, nullable = True)
     experience_summary = Column(Text, nullable = True)
     wants_paid = Column(Boolean, nullable = False, default = True)
@@ -85,7 +79,7 @@ class WorkerProfile(Base):
         default = ContactVisibility.private,
     )
 
-    is_available = Column(Boolean, nullable = False, default = True)
+    is_available = Column(Boolean, nullable = True, default = True)
     created_at = Column(DateTime(timezone = True), nullable = False, server_default = func.now())
     updated_at = Column(DateTime(timezone = True), nullable = False, server_default = func.now(), onupdate = func.now())
 
@@ -109,6 +103,12 @@ class EmployerProfile(Base):
     id = Column(Integer, primary_key = True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete = "CASCADE"), unique = True, nullable = False, index = True)
     organization_name = Column(String(160), nullable = False)
+    nip = Column(String(10), nullable = True)
+    regon = Column(String(14), nullable = True)
+    org_address = Column(String(255), nullable = True)
+    org_phone = Column(String(50), nullable = True)
+    contact_person = Column(String(160), nullable = True)
+    institution_type = Column(String(160), nullable = True)
     organization_description = Column(Text, nullable = True)
     is_government_service = Column(Boolean, nullable = False, default = False)
     is_verified = Column(Boolean, nullable = False, default = False)

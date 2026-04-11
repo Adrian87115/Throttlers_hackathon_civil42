@@ -7,6 +7,14 @@ export async function getMyProfile(token: AccessToken): Promise<unknown> {
 	return await apiClient.get(AppApiPaths.getMyProfile(), config);
 }
 
+export async function patchMyProfile(
+	token: AccessToken,
+	payload: Record<string, unknown>
+): Promise<unknown> {
+	const config: RequestConfig = { token };
+	return await apiClient.patch(AppApiPaths.patchMyProfile(), payload, config);
+}
+
 export async function postOpenHandsAlert(
 	token: AccessToken,
 	payload: {

@@ -1,6 +1,7 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Enum, func
-from sqlalchemy.orm import relationship
 import enum
+
+from sqlalchemy import Boolean, Column, DateTime, Enum, Integer, String, func
+from sqlalchemy.orm import relationship
 
 from app.db.base import Base
 
@@ -18,6 +19,9 @@ class User(Base):
     hashed_password = Column(String, nullable = False)
     role = Column(String, default = "user", nullable = False)
     account_type = Column(Enum(AccountType, name = "account_type"), nullable = True)
+    city = Column(String, nullable = True)
+    district = Column(String, nullable = True)
+    phone = Column(String, nullable = True)
     created_at = Column(DateTime(timezone = True), nullable = False, server_default = func.now())
     updated_at = Column(DateTime(timezone = True), nullable = False, server_default = func.now(), onupdate = func.now())
 
