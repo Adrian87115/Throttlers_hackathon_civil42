@@ -1,3 +1,8 @@
+import Lubelskie from '@/assets/images/partners/lubelskie.jpg';
+import Mon from '@/assets/images/partners/mon.jpg';
+import Pck from '@/assets/images/partners/pck.avif';
+import Psp from '@/assets/images/partners/psp.png';
+import Rcb from '@/assets/images/partners/rcb.jpg';
 import RadarRender from '@/components/Animated/Radar/RadarBackground';
 import ThreadsBackground from '@/components/Animated/Threads/ThreadsBackground';
 import AppLogo from '@/components/icons/AppLogo/AppLogo';
@@ -41,7 +46,7 @@ export default function MainDashboard() {
 					</section>
 
 					{/* CTA cards */}
-					<section className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16 w-4/5 mx-auto">
+					<section className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-32 w-4/5 mx-auto">
 						<Link
 							to={AppRoutePaths.employees()}
 							className="group rounded-2xl border border-base-border bg-white p-8 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-200">
@@ -53,12 +58,13 @@ export default function MainDashboard() {
 									{ALL_EMPLOYEES.length.toLocaleString('pl-PL')}+
 								</span>
 							</div>
-							<h2 className="text-2xl font-bold text-gray-900 mb-2">
+							<h2 className="text-2xl font-bold text-gray-600 mb-2">
 								Pracownicy
 							</h2>
 							<p className="text-gray-600 mb-4">
 								Przeglądaj kategorie zawodowe i znajdź wykwalifikowanych
-								specjalistów spośród {ALL_EMPLOYEES.length} zarejestrowanych osób.
+								specjalistów spośród {ALL_EMPLOYEES.length} zarejestrowanych
+								osób.
 							</p>
 							<span className="inline-flex items-center gap-1.5 text-sm font-medium text-primary-blue group-hover:gap-2.5 transition-all">
 								Przeglądaj specjalistów <ArrowRight size={16} />
@@ -76,12 +82,12 @@ export default function MainDashboard() {
 									1 300+
 								</span>
 							</div>
-							<h2 className="text-2xl font-bold text-gray-900 mb-2">
+							<h2 className="text-2xl font-bold text-gray-600 mb-2">
 								Wolontariusze
 							</h2>
 							<p className="text-gray-600 mb-4">
-								Dołącz do 1 300 wolontariuszy i pomagaj innym w lokalnych akcjach
-								społecznych oraz sytuacjach kryzysowych.
+								Dołącz do 1 300 wolontariuszy i pomagaj innym w lokalnych
+								akcjach społecznych oraz sytuacjach kryzysowych.
 							</p>
 							<span className="inline-flex items-center gap-1.5 text-sm font-medium text-rose-500 group-hover:gap-2.5 transition-all">
 								Dołącz do wolontariuszy <ArrowRight size={16} />
@@ -90,9 +96,43 @@ export default function MainDashboard() {
 					</section>
 				</ThreadsBackground>
 
+				{/* Partnerzy */}
+				<section className="mb-32">
+					<h2 className="text-4xl font-bold text-gray-600 mb-8 text-center">
+						Partnerzy
+					</h2>
+					<div className="flex flex-wrap items-center justify-center gap-20">
+						<img
+							src={Mon}
+							alt="Ministerstwo Obrony Narodowej"
+							className="h-40 object-contain"
+						/>
+						<img
+							src={Lubelskie}
+							alt="Województwo Lubelskie"
+							className="h-20 object-contain"
+						/>
+						<img
+							src={Rcb}
+							alt="Rządowe Centrum Bezpieczeństwa"
+							className="h-30 object-contain"
+						/>
+						<img
+							src={Psp}
+							alt="Państwowa Straż Pożarna"
+							className="h-30 object-contain"
+						/>
+						<img
+							src={Pck}
+							alt="Polski Czerwony Krzyż"
+							className="h-30 object-contain"
+						/>
+					</div>
+				</section>
+
 				{/* Dla kogo */}
-				<section className="mb-16">
-					<h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">
+				<section className="mb-32">
+					<h2 className="text-4xl font-bold text-gray-600 mb-8 text-center">
 						Dla kogo przeznaczona jest aplikacja?
 					</h2>
 					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -154,9 +194,9 @@ export default function MainDashboard() {
 				</section>
 
 				{/* Jak działa */}
-				<section className="mb-16">
-					<h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
-						Jak działa aplikacja w praktyce?
+				<section className="mb-32">
+					<h2 className="text-4xl font-bold text-gray-600 mb-6 text-center">
+						Jak aplikacja działa w praktyce?
 					</h2>
 					<div className="max-w-3xl mx-auto space-y-4">
 						<div className="rounded-xl bg-gray-50 border border-base-border p-5">

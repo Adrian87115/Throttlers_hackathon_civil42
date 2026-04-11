@@ -1,6 +1,8 @@
 import BaseContentWrapper from '@/components/Wrappers/BaseContentWrapper';
+import { AppRoutePaths } from '@/types/types';
 import { Handshake, Heart, Shield, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 
 export default function Volunteers() {
 	const { t } = useTranslation();
@@ -69,9 +71,11 @@ export default function Volunteers() {
 					Uzupełnij swój profil, zaznacz gotowość do wolontariatu i określ swoje
 					kwalifikacje. Otrzymasz powiadomienia o akcjach w Twoim regionie.
 				</p>
-				<button className="px-6 py-3 rounded-lg bg-primary-blue text-white font-medium hover:bg-primary-blue/90 transition-colors shadow-sm cursor-pointer">
+				<Link
+					to={AppRoutePaths.volunteerSignup()}
+					className="inline-block px-6 py-3 rounded-lg bg-primary-blue text-white font-medium hover:bg-primary-blue/90 transition-colors shadow-sm cursor-pointer">
 					Dołącz do wolontariuszy
-				</button>
+				</Link>
 			</section>
 		</BaseContentWrapper>
 	);

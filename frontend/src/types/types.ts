@@ -13,7 +13,8 @@ export const AppRoutePaths = {
 		id ? `/profile/${id}` : '/profile/:id',
 	userSettings: () => `/settings`,
 	employees: () => `/employees`,
-	volunteers: () => `/volunteers`
+	volunteers: () => `/volunteers`,
+	volunteerSignup: () => `/volunteers/signup`
 };
 
 export const AppApiPaths = {

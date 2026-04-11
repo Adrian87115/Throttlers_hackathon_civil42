@@ -15,6 +15,7 @@ import MainDashboard from './pages/MainDashboard/MainDashboard';
 import NotFound from './pages/NotFound/NotFound';
 import Register from './pages/Register/Register';
 import SearchResults from './pages/SearchResults/SearchResults';
+import VolunteerSignup from './pages/Volunteers/VolunteerSignup';
 import Volunteers from './pages/Volunteers/Volunteers';
 import { AppRoutePaths } from './types/types';
 
@@ -68,6 +69,15 @@ function App() {
 							element={
 								<BaseLayout>
 									<Volunteers />
+								</BaseLayout>
+							}
+						/>
+
+						<Route
+							path={AppRoutePaths.volunteerSignup()}
+							element={
+								<BaseLayout>
+									<VolunteerSignup />
 								</BaseLayout>
 							}
 						/>
