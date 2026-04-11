@@ -8,13 +8,17 @@ import { useTranslation } from 'react-i18next';
 import { FaGoogle } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
 
-export default function Login() {
+export default function Register() {
 	const { t } = useTranslation();
-	const [formData, setFormData] = useState<{ email: string; password: string }>(
-		{ email: '', password: '' }
-	);
+	const [formData, setFormData] = useState<{
+		email: string;
+		password: string;
+		confirmPassword: string;
+	}>({ email: '', password: '', confirmPassword: '' });
 
 	const [isPassVisible, setIsPassVisible] = useState<boolean>(false);
+	const [isConfirmPassVisible, setIsConfirmPassVisible] =
+		useState<boolean>(false);
 
 	const navigate = useNavigate();
 
@@ -25,7 +29,7 @@ export default function Login() {
 		});
 	}
 
-	function handleLogin(e: React.FormEvent<HTMLFormElement>) {
+	function handleRegister(e: React.FormEvent<HTMLFormElement>) {
 		e.preventDefault();
 
 		console.log(formData);
@@ -44,13 +48,13 @@ export default function Login() {
 					<div className="flex flex-col items-center text-primary-blue">
 						<AppLogo />
 						<h1 className="tracking-wide text-3xl font-medium mt-5">
-							{t('login.welcome')}
+							{t('register.title')}
 						</h1>
-						<span>{t('login.loginToApp')}</span>
+						<span>{t('register.subtitle')}</span>
 					</div>
 					<BaseSpacer className="my-10 w-[70%]! mx-auto" />
 
-					<form onSubmit={handleLogin} className="contents">
+					<form onSubmit={handleRegister} className="contents">
 						<div className="flex flex-col gap-8 w-[80%] mx-auto">
 							<div className="flex flex-col gap-1">
 								<label>{t('login.email')}</label>
@@ -72,7 +76,21 @@ export default function Login() {
 										passwordVisible: isPassVisible,
 										setPasswordVisible: setIsPassVisible
 									}}
-									autoComplete="current-password"
+									autoComplete="new-password"
+								/>
+							</div>
+							<div className="flex flex-col gap-1">
+								<label>{t('register.confirmPassword')}</label>
+								<Input
+									value={formData.confirmPassword}
+									type={isConfirmPassVisible ? 'text' : 'password'}
+									onChange={handleChange}
+									name="confirmPassword"
+									password={{
+										passwordVisible: isConfirmPassVisible,
+										setPasswordVisible: setIsConfirmPassVisible
+									}}
+									autoComplete="new-password"
 								/>
 							</div>
 						</div>
@@ -82,15 +100,17 @@ export default function Login() {
 								endIcon={<FaGoogle size={20} />}
 								className="w-fit"
 								onClick={handleGoogleLogin}>
-								{t('login.googleLogin')}
+								{t('register.googleRegister')}
 							</BaseButton>
 
-							<BaseButton type="submit">{t('login.login')}</BaseButton>
+							<BaseButton type="submit">
+								{t('register.register')}
+							</BaseButton>
 
 							<Link
-								to={AppRoutePaths.registerPage()}
+								to={AppRoutePaths.loginPage()}
 								className="text-sm text-primary-blue hover:underline">
-								{t('register.noAccount')}
+								{t('register.alreadyHaveAccount')}
 							</Link>
 						</div>
 					</form>

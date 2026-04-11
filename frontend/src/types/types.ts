@@ -1,6 +1,7 @@
 export const AppRoutePaths = {
 	// auth
 	loginPage: () => '/login',
+	registerPage: () => '/register',
 	mainDashboard: () => '/',
 	userProfile: () => `/me/profile`,
 	userSettings: () => `/settings`

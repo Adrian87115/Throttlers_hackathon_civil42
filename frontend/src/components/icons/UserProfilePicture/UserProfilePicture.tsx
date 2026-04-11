@@ -10,9 +10,11 @@ export default function UserProfilePicture({ className }: Props) {
 	const { getUser } = useAuth();
 	const user = getUser();
 
-	return user?.spotifyProfilePicture ? (
+	// todo: change
+
+	return false ? (
 		<LoadingImageSkeleton
-			url={user.spotifyProfilePicture}
+			url={(user as any).spotifyProfilePicture || ''}
 			className={`h-16 w-16 rounded-full shadow-base shadow-white profile-pict ${
 				className || ''
 			}`}

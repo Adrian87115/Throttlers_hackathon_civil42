@@ -33,13 +33,13 @@ export function BaseSelect({
 	return (
 		<Select value={value} onValueChange={onChange}>
 			<SelectTrigger
-				className={`w-fit bg-bg-primary-dark cursor-pointer border-dimmed-blue! focus-visible:ring-0 text-white border rounded-md shadow-base shadow-primary-blue ${
+				className={`w-fit bg-bg-primary-white cursor-pointer border-dimmed-blue! focus-visible:ring-0 text-white border rounded-md shadow-base shadow-primary-blue ${
 					className || ''
 				}`}>
 				<SelectValue placeholder={placeholder} />
 			</SelectTrigger>
 
-			<SelectContent className="bg-bg-primary-dark text-white border border-gray-600 rounded-md shadow-lg">
+			<SelectContent className="bg-bg-primary-white text-white border border-gray-600 rounded-md shadow-lg">
 				<SelectGroup className="">
 					{label && (
 						<SelectLabel className="text-gray-400">{label}</SelectLabel>

@@ -3,11 +3,11 @@
 @import 'tailwindcss';
 
 @theme {
-	--color-bg-primary-dark: #101010;
-	--color-bg-darker: #080808;
-	--color-bg-lighter: #181818;
-	--color-primary-blue: #a1ceef;
-	--color-dimmed-blue: #344155;
+	--color-bg-primary-white: #fff;
+	--color-bg-darker: #e8e8e8;
+	--color-bg-lighter: #ffffff;
+	--color-primary-blue: #2b7abf;
+	--color-dimmed-blue: #8cb7de;
 
 	--padding-header: 120px;
 
@@ -42,7 +42,7 @@ body {
 
 /* Track */
 ::-webkit-scrollbar-track {
-	background: var(--color-bg-primary-dark);
+	background: var(--color-bg-primary-white);
 }
 
 /* Handle */
@@ -125,7 +125,7 @@ body {
 	transform-origin: top center;
 	transition: all 0.3s ease-in-out;
 	z-index: 20;
-	background-color: var(--color-bg-primary-dark);
+	background-color: var(--color-bg-primary-white);
 }
 
 .input-modal.active {

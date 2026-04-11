@@ -40,7 +40,7 @@ export function BaseDropdown({
 			<DropdownMenuContent
 				sideOffset={sideOffset}
 				className={cn(
-					'z-[400] bg-bg-primary-dark shadow-base shadow-dimmed-blue border-gray-500 text-white',
+					'z-[400] bg-bg-primary-white shadow-base shadow-dimmed-blue border-gray-500 text-white',
 					'w-fit',
 					contentClassName
 				)}>

@@ -14,7 +14,17 @@
 		"email": "Email",
 		"password": "Hasło",
 		"login": "Zaloguj się",
-		"googleLogin": "Zaloguj się z Google"
+		"googleLogin": "Zaloguj się z Google",
+		"alreadyHaveAccount": "Masz już konto? Zaloguj się"
+	},
+	"register": {
+		"title": "Dołącz do nas!",
+		"subtitle": "Utwórz nowe konto",
+		"confirmPassword": "Potwierdź hasło",
+		"register": "Zarejestruj się",
+		"googleRegister": "Zarejestruj się z Google",
+		"alreadyHaveAccount": "Masz już konto? Zaloguj się",
+		"noAccount": "Nie masz konta? Zarejestruj się"
 	},
 	"notFound": {
 		"title": "Strona nie istnieje",
