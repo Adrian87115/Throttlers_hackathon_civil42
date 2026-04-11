@@ -21,5 +21,22 @@ services:
     environment:
       DATABASE_URL: postgresql://app_user:87115@db:5432/our_app_db
 
+  pgadmin:
+    image: dpage/pgadmin4:8
+    container_name: civil42_pgadmin
+    depends_on:
+      - db
+    environment:
+      PGADMIN_DEFAULT_EMAIL: app_user@db.com
+      PGADMIN_DEFAULT_PASSWORD: 87115
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
+
 volumes:
   postgres_data:
+  pgadmin_data:
