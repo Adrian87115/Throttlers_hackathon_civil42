@@ -9,12 +9,12 @@ import './i18n/i18n';
 import './index.css';
 import BaseLayout from './layouts/BaseLayout';
 import CategoryDetail from './pages/CategoryDetail/CategoryDetail';
+import Crisis from './pages/Crisis/Crisis';
 import EmployeeMap from './pages/EmployeeMap/EmployeeMap';
 import EmployeeProfile from './pages/EmployeeProfile/EmployeeProfile';
 import Employees from './pages/Employees/Employees';
 import Login from './pages/Login/Login';
 import MainDashboard from './pages/MainDashboard/MainDashboard';
-import Crisis from './pages/Crisis/Crisis';
 import NotFound from './pages/NotFound/NotFound';
 import OrgProfile from './pages/OrgProfile/OrgProfile';
 import OwnerVerificationAdmin from './pages/OwnerVerificationAdmin/OwnerVerificationAdmin';
@@ -171,11 +171,9 @@ function App() {
 						<Route
 							path={AppRoutePaths.crisis()}
 							element={
-								<AuthenticatedRoute>
-									<BaseLayout>
-										<Crisis />
-									</BaseLayout>
-								</AuthenticatedRoute>
+								<BaseLayout>
+									<Crisis />
+								</BaseLayout>
 							}
 						/>
 

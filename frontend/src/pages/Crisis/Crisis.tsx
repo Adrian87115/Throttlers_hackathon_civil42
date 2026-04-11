@@ -1,5 +1,6 @@
 import BaseDimmedBackground from '@/components/BaseDimmedBackground/BaseDimmedBackground';
 import BaseContentWrapper from '@/components/Wrappers/BaseContentWrapper';
+import { useAuth } from '@/contexts/AuthUserContext';
 import { useAuthenticatedApi } from '@/hooks/useAuthenticatedApi';
 import { getMyProfile } from '@/services/auth';
 import type { CrisisData, CrisisResponder } from '@/services/crisis';
@@ -38,6 +39,20 @@ import { LUBLIN_DISTRICTS } from '../EmployeeMap/districts';
 
 const GOOGLE_MAPS_API_KEY = envConfig.googlemaps.token || '';
 const LUBLIN_CENTER = { lat: 51.2465, lng: 22.5685 };
+
+function buildReadonlyGuestCrisis(): CrisisData {
+	return {
+		id: -1,
+		title: 'Publiczny podglad sytuacji kryzysowej',
+		description:
+			'Mapa prezentuje dzielnice objete zgloszeniami kryzysowymi w trybie tylko do odczytu.',
+		severity: 'high',
+		started_at: new Date().toISOString(),
+		affected_districts: LUBLIN_DISTRICTS.map((district) => district.id),
+		status: 'active',
+		created_by: 'system'
+	};
+}
 
 type CrisisViewerProfile = {
 	account_type?: string;
@@ -1038,6 +1053,49 @@ function UserCrisisRenderer({ crisis }: { crisis: CrisisData }) {
 	);
 }
 
+function GuestReadonlyCrisisRenderer({ crisis }: { crisis: CrisisData }) {
+	return (
+		<>
+			<CrisisPolygons
+				affectedDistricts={crisis.affected_districts}
+				onDistrictClick={() => {}}
+				selectedDistrictId={null}
+			/>
+			<CrisisMarkers
+				affectedDistricts={crisis.affected_districts}
+				onDistrictClick={() => {}}
+				selectedDistrictId={null}
+			/>
+
+			<div className="absolute top-4 left-4 bg-white/95 backdrop-blur-sm rounded-xl shadow-lg z-10 w-80">
+				<div className="p-4 border-b border-gray-100">
+					<div className="flex items-center gap-2 mb-2">
+						<span className="h-2.5 w-2.5 rounded-full animate-pulse bg-red-500" />
+						<span className="text-xs font-bold uppercase tracking-wide text-red-600">
+							Podglad publiczny
+						</span>
+					</div>
+					<h3 className="text-sm font-bold text-gray-900">{crisis.title}</h3>
+					<p className="text-xs text-gray-500 mt-1">{crisis.description}</p>
+				</div>
+
+				<div className="p-4 space-y-2 text-xs">
+					<div className="flex justify-between">
+						<span className="text-gray-500">Widoczne dzielnice</span>
+						<span className="font-semibold text-gray-900">
+							{crisis.affected_districts.length}
+						</span>
+					</div>
+					<div className="flex justify-between">
+						<span className="text-gray-500">Tryb</span>
+						<span className="font-semibold text-gray-900">Tylko odczyt</span>
+					</div>
+				</div>
+			</div>
+		</>
+	);
+}
+
 /* ------------------------------------------------------------------ */
 /*  Active crisis map view                                            */
 /* ------------------------------------------------------------------ */
@@ -1248,6 +1306,7 @@ function CrisisMapContent({
 /* ------------------------------------------------------------------ */
 
 export default function Crisis() {
+	const { auth } = useAuth();
 	const { callWithToken } = useAuthenticatedApi();
 	const [crisis, setCrisis] = useState<CrisisData | null>(null);
 	const [viewerProfile, setViewerProfile] =
@@ -1256,9 +1315,19 @@ export default function Crisis() {
 	const [showStartModal, setShowStartModal] = useState(false);
 	const [submittingStart, setSubmittingStart] = useState(false);
 	const [endingCrisis, setEndingCrisis] = useState(false);
+	const isLoggedIn = Boolean(auth.user);
 
 	useEffect(() => {
 		async function fetchCrisis() {
+			if (auth.isLoading) return;
+
+			if (!isLoggedIn) {
+				setCrisis(buildReadonlyGuestCrisis());
+				setViewerProfile(null);
+				setLoading(false);
+				return;
+			}
+
 			try {
 				const [data, profile] = await Promise.all([
 					callWithToken(getActiveCrisis),
@@ -1275,7 +1344,7 @@ export default function Crisis() {
 			}
 		}
 		fetchCrisis();
-	}, [callWithToken]);
+	}, [auth.isLoading, callWithToken, isLoggedIn]);
 
 	async function handleStartCrisis(data: {
 		title: string;
@@ -1406,7 +1475,9 @@ export default function Crisis() {
 						{ featureType: 'poi', stylers: [{ visibility: 'off' }] },
 						{ featureType: 'transit', stylers: [{ visibility: 'off' }] }
 					]}>
-					{isPublicOrganization ? (
+					{!isLoggedIn ? (
+						<GuestReadonlyCrisisRenderer crisis={crisis} />
+					) : isPublicOrganization ? (
 						<CrisisMapContent
 							crisis={crisis}
 							onEndCrisis={handleEndCrisis}
