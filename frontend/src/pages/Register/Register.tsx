@@ -22,6 +22,8 @@ export default function Register() {
 		password: '',
 		confirmPassword: '',
 		// user fields
+		firstName: '',
+		lastName: '',
 		city: '',
 		district: '',
 		phone: '',
@@ -68,6 +70,8 @@ export default function Register() {
 					email: formData.email,
 					password: formData.password,
 					confirmPassword: formData.confirmPassword,
+					first_name: formData.firstName,
+					last_name: formData.lastName,
 					city: formData.city,
 					district: formData.district,
 					phone: formData.phone
@@ -199,6 +203,28 @@ export default function Register() {
 							{accountType === 'user' && (
 								<>
 									<BaseSpacer className="my-2 w-full" />
+
+									<div className="flex flex-col gap-1">
+										<label>Imię</label>
+										<Input
+											value={formData.firstName}
+											onChange={handleChange}
+											name="firstName"
+											autoComplete="given-name"
+											placeholder="np. Jan"
+										/>
+									</div>
+
+									<div className="flex flex-col gap-1">
+										<label>Nazwisko</label>
+										<Input
+											value={formData.lastName}
+											onChange={handleChange}
+											name="lastName"
+											autoComplete="family-name"
+											placeholder="np. Kowalski"
+										/>
+									</div>
 
 									<div className="flex flex-col gap-1">
 										<label>Miasto</label>

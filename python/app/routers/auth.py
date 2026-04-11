@@ -36,6 +36,8 @@ class TokenPairResponse(BaseModel):
 
 
 class RegisterUserRequest(BaseModel):
+    first_name: str
+    last_name: str
     email: EmailStr
     password: str
     confirmPassword: str
@@ -330,7 +332,9 @@ async def register_basic_user(user_in: RegisterUserRequest,
                     phone = user_in.phone)
         db.add(user)
         db.flush()
-        db.add(WorkerProfile(user_id = user.id))
+        db.add(WorkerProfile(user_id = user.id,
+                     first_name = user_in.first_name,
+                     last_name = user_in.last_name))
         db.commit()
         db.refresh(user)
 
