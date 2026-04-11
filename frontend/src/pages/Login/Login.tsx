@@ -3,8 +3,9 @@ import AppLogo from '@/components/icons/AppLogo/AppLogo';
 import BaseSpacer from '@/components/Spacers/BaseSpacer';
 import { Input } from '@/components/ui/input';
 import { useAuthenticatedApi } from '@/hooks/useAuthenticatedApi';
-import { handleUserLogin } from '@/services/login';
-import { AppRoutePaths } from '@/types/types';
+import apiClient from '@/services/apiClient';
+import { LoginResponseData } from '@/types/login';
+import { AppApiPaths, AppRoutePaths } from '@/types/types';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FaGoogle } from 'react-icons/fa';
@@ -20,7 +21,6 @@ export default function Login() {
 
 	const navigate = useNavigate();
 
-	const { callWithToken } = useAuthenticatedApi();
 
 	function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
 		setFormData({
@@ -33,7 +33,10 @@ export default function Login() {
 		e.preventDefault();
 
 		console.log(formData);
-		const res = await callWithToken(handleUserLogin, formData);
+		const res = (await apiClient.post(
+		AppApiPaths.postUserLogin(),
+		formData,
+	)) as LoginResponseData;
 
 		console.log(res);
 
