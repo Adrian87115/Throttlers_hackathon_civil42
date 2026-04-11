@@ -21,13 +21,25 @@ Base.metadata.create_all(bind = engine)
 app = FastAPI()
 app.add_middleware(LoggingMiddleware)
 app.add_middleware(CORSMiddleware,
-                   allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+                   allow_origins=[
+                       "http://localhost:3000",
+                       "http://127.0.0.1:3000",
+                       "http://localhost:5173",
+                       "http://127.0.0.1:5173",
+                       "http://localhost:4173",
+                       "http://127.0.0.1:4173",
+                   ],
                    allow_credentials = True,
                    allow_methods = ["*"],
                    allow_headers = ["*"])
 app.include_router(users.router, prefix = "/users", tags = ["Users"])
 app.include_router(auth.router, prefix = "/auth", tags = ["Auth"])
 app.include_router(marketplace.router, prefix = "/marketplace", tags = ["Marketplace"])
+
+# Compatibility mounts for clients configured with a /api base URL.
+app.include_router(users.router, prefix = "/api/users", tags = ["Users"])
+app.include_router(auth.router, prefix = "/api/auth", tags = ["Auth"])
+app.include_router(marketplace.router, prefix = "/api/marketplace", tags = ["Marketplace"])
 
 @app.on_event("startup")
 def create_default_owner():

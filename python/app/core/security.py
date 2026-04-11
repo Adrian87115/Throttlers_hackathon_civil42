@@ -40,9 +40,27 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
         expire = datetime.utcnow() + expires_delta
     else:
         expire = datetime.utcnow() + timedelta(minutes = 10)
+    if "token_type" not in to_encode:
+        to_encode["token_type"] = "access"
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, KEY, algorithm = ALGORITHM)
     return encoded_jwt
+
+
+def create_refresh_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+    to_encode = data.copy()
+    if expires_delta is not None:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(days = 30)
+    to_encode["token_type"] = "refresh"
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, KEY, algorithm = ALGORITHM)
+    return encoded_jwt
+
+
+def decode_token_payload(token: str) -> dict:
+    return jwt.decode(token, KEY, algorithms = ALGORITHM)
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl = "auth/login")
 optional_oauth2_scheme = OAuth2PasswordBearer(tokenUrl = "auth/login", auto_error = False)
@@ -51,7 +69,9 @@ optional_oauth2_scheme = OAuth2PasswordBearer(tokenUrl = "auth/login", auto_erro
 def _decode_user_from_token(token: str, db: Session) -> User:
     credentials_exception = HTTPException(status_code = status.HTTP_401_UNAUTHORIZED, detail = "Invalid credentials", headers = {"WWW-Authenticate": "Bearer"})
     try:
-        payload = jwt.decode(token, KEY, algorithms = ALGORITHM)
+        payload = decode_token_payload(token)
+        if payload.get("token_type") == "refresh":
+            raise credentials_exception
         user_id: str = payload.get("sub")
         if user_id is None:
             raise credentials_exception
