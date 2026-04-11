@@ -350,6 +350,17 @@ export default function CategoryDetail() {
 			</section>
 
 			<section className="mb-6">
+				{!isAuthenticated && (
+					<div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+						Aby przegladac profile oraz szczegolowe informacje o osobach, zaloguj
+						sie.
+						<Link
+							to={AppRoutePaths.loginPage()}
+							className="ml-2 inline-flex font-semibold text-amber-900 underline underline-offset-2 hover:opacity-80">
+							Przejdz do logowania
+						</Link>
+					</div>
+				)}
 				<input
 					type="text"
 					value={searchQuery}
