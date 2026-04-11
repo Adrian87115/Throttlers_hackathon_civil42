@@ -1,4 +1,5 @@
 import BaseContentWrapper from '@/components/Wrappers/BaseContentWrapper';
+import { ALL_EMPLOYEES } from '@/data/employees';
 import envConfig from '@/types/envConfig';
 import {
 	APIProvider,
@@ -225,10 +226,7 @@ function MapContent() {
 			)
 		: {};
 
-	const totalEmployees = LUBLIN_DISTRICTS.reduce(
-		(sum, d) => sum + d.employees.length,
-		0
-	);
+	const totalEmployees = ALL_EMPLOYEES.length;
 
 	return (
 		<>
