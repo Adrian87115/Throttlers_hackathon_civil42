@@ -6,12 +6,16 @@ import AuthUserContext from './contexts/AuthUserContext';
 import './i18n/i18n';
 import './index.css';
 import BaseLayout from './layouts/BaseLayout';
-import Login from './pages/Login/Login';
+import CategoryDetail from './pages/CategoryDetail/CategoryDetail';
 import EmployeeMap from './pages/EmployeeMap/EmployeeMap';
+import EmployeeProfile from './pages/EmployeeProfile/EmployeeProfile';
+import Employees from './pages/Employees/Employees';
+import Login from './pages/Login/Login';
 import MainDashboard from './pages/MainDashboard/MainDashboard';
 import NotFound from './pages/NotFound/NotFound';
-import SearchResults from './pages/SearchResults/SearchResults';
 import Register from './pages/Register/Register';
+import SearchResults from './pages/SearchResults/SearchResults';
+import Volunteers from './pages/Volunteers/Volunteers';
 import { AppRoutePaths } from './types/types';
 
 function App() {
@@ -46,6 +50,42 @@ function App() {
 							element={
 								<BaseLayout>
 									<MainDashboard />
+								</BaseLayout>
+							}
+						/>
+
+						<Route
+							path={AppRoutePaths.employees()}
+							element={
+								<BaseLayout>
+									<Employees />
+								</BaseLayout>
+							}
+						/>
+
+						<Route
+							path={AppRoutePaths.volunteers()}
+							element={
+								<BaseLayout>
+									<Volunteers />
+								</BaseLayout>
+							}
+						/>
+
+						<Route
+							path={AppRoutePaths.employeeProfilePage()}
+							element={
+								<BaseLayout>
+									<EmployeeProfile />
+								</BaseLayout>
+							}
+						/>
+
+						<Route
+							path={AppRoutePaths.categoryPage()}
+							element={
+								<BaseLayout>
+									<CategoryDetail />
 								</BaseLayout>
 							}
 						/>

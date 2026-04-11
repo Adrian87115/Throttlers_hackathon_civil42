@@ -1,6 +1,14 @@
 import { useAuth } from '@/contexts/AuthUserContext';
 import { AppRoutePaths } from '@/types/types';
-import { LogOut, MapPin, Search, Settings, User, X } from 'lucide-react';
+import {
+	Handshake,
+	LogOut,
+	MapPin,
+	Search,
+	Settings,
+	User,
+	X
+} from 'lucide-react';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
@@ -50,6 +58,16 @@ export default function Header() {
 			to: AppRoutePaths.mapPage(),
 			label: t('header.map'),
 			icon: <MapPin size={16} />
+		},
+		{
+			to: AppRoutePaths.employees(),
+			label: t('header.employees'),
+			icon: <User size={16} />
+		},
+		{
+			to: AppRoutePaths.volunteers(),
+			label: t('header.volunteers'),
+			icon: <Handshake size={16} />
 		}
 	];
 

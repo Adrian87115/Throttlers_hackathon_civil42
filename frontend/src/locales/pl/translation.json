@@ -130,7 +130,9 @@
 		"map": "Mapa",
 		"searchPlaceholder": "Szukaj...",
 		"searchLabel": "Szukaj: \"{{query}}\"",
-		"playNow": "Graj"
+		"playNow": "Graj",
+		"employees": "Pracownicy",
+		"volunteers": "Wolontariusze"
 	},
 	"search": {
 		"title": "Wyniki wyszukiwania",
@@ -140,9 +142,12 @@
 		"tryDifferent": "Spróbuj innej frazy lub sprawdź pisownię",
 		"showOnMap": "Pokaż na mapie"
 	},
+	"copyableText": {
+		"copyDefault": "Skopiuj do schowka"
+	},
 	"dashboard": {
-		"greeting": "Rozpocznij poszukiwania pracownika spośród {{employeeCount}} zarejestrowanych osób",
-		"subtitle": "Znajdź idealnego pracownika do swojego projektu",
+		"greeting": "Rozpocznij poszukiwania spośród {{employeeCount}} zarejestrowanych osób",
+		"subtitle": "Znajdź idealną osobę do swojego zespołu",
 		"featuredEmployees": "Wyróżnieni pracownicy",
 		"allEmployees": "Wszyscy pracownicy",
 		"filters": "Filtry",

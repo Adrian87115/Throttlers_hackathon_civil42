@@ -182,7 +182,7 @@ body {
 	border-radius: 12px;
 	background-color: var(--color-bg-lighter);
 	border: 1px solid var(--color-gray-500);
-	color: white;
+	color: black;
 	padding: 4px 15px;
 	opacity: 0;
 	pointer-events: none;

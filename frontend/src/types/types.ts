@@ -3,10 +3,17 @@ export const AppRoutePaths = {
 	loginPage: () => '/login',
 	registerPage: () => '/register',
 	mainDashboard: () => '/',
+	categoryPage: (category?: string) =>
+		category ? `/category/${category}` : '/category/:category',
 	mapPage: () => '/map',
-	searchPage: (query?: string) => `/search${query ? `?q=${encodeURIComponent(query)}` : ''}`,
+	searchPage: (query?: string) =>
+		`/search${query ? `?q=${encodeURIComponent(query)}` : ''}`,
 	userProfile: () => `/me/profile`,
-	userSettings: () => `/settings`
+	employeeProfilePage: (id?: string) =>
+		id ? `/profile/${id}` : '/profile/:id',
+	userSettings: () => `/settings`,
+	employees: () => `/employees`,
+	volunteers: () => `/volunteers`
 };
 
 export const AppApiPaths = {

@@ -1,6 +1,8 @@
 import BaseButton from '@/components/Buttons/BaseButton';
+import { AppRoutePaths } from '@/types/types';
 import { Briefcase, MapPin, UserRound } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 
 export type CategoryKey =
 	| 'construction'
@@ -74,7 +76,9 @@ export default function EmployeeCard({ employee }: Props) {
 						</div>
 						<div className="flex items-center gap-1 text-xs text-base-muted-foreground">
 							<Briefcase size={12} />
-							<span>{t('dashboard.experienceYears', { count: employee.experience })}</span>
+							<span>
+								{t('dashboard.experienceYears', { count: employee.experience })}
+							</span>
 						</div>
 					</div>
 
@@ -85,9 +89,11 @@ export default function EmployeeCard({ employee }: Props) {
 			</div>
 
 			<div className="mt-4 pt-3 border-t border-base-border">
-				<BaseButton size="small" className="w-full!">
-					{t('dashboard.viewProfile')}
-				</BaseButton>
+				<Link to={AppRoutePaths.employeeProfilePage(employee.id)}>
+					<BaseButton size="small" className="w-full!">
+						{t('dashboard.viewProfile')}
+					</BaseButton>
+				</Link>
 			</div>
 		</div>
 	);

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { FaRegCopy } from 'react-icons/fa';
 import HoverableInfo from '../HoverableInfo/HoverableInfo';
 
@@ -17,6 +18,7 @@ export default function CopyableText({
 	function handleClipboardCopy(x: string) {
 		navigator.clipboard.writeText(x);
 	}
+	const { t } = useTranslation();
 
 	return (
 		<div className="flex items-center gap-2 hoverable-info">
@@ -33,7 +35,7 @@ export default function CopyableText({
 						onClick={() => handleClipboardCopy(copyValue)}
 					/>
 				}
-				popupLabel={customLabel ? customLabel : 'Copy to clipboard'}
+				popupLabel={customLabel ? customLabel : t('copyableText.copyDefault')}
 			/>
 			{!iconOnly && iconPosition === 'right' && <span>{copyValue}</span>}
 		</div>

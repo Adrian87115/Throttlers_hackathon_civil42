@@ -5,6 +5,7 @@ import {
 	DialogHeader,
 	DialogTitle
 } from '@/components/ui/dialog';
+import { ALL_EMPLOYEES } from '@/data/employees';
 import envConfig from '@/types/envConfig';
 import {
 	APIProvider,
@@ -16,11 +17,11 @@ import { MapPin, Search } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
+import { LUBLIN_DISTRICTS } from '../EmployeeMap/districts';
 import EmployeeCard, {
 	type CategoryKey,
 	type Employee
 } from '../MainDashboard/EmployeeCard';
-import { LUBLIN_DISTRICTS } from '../EmployeeMap/districts';
 
 const GOOGLE_MAPS_API_KEY = envConfig.googlemaps.token || '';
 
@@ -61,117 +62,7 @@ const CITY_COORDS: Record<string, { lat: number; lng: number }> = {
 	rzeszów: { lat: 50.0412, lng: 21.999 }
 };
 
-// Same mock data as MainDashboard — replace with shared data source / API call
-const MOCK_EMPLOYEES: Employee[] = [
-	{
-		id: '1',
-		name: 'Anna Kowalska',
-		role: 'Frontend Developer',
-		category: 'technology',
-		location: 'Lublin',
-		experience: 5,
-		available: true
-	},
-	{
-		id: '2',
-		name: 'Jan Nowak',
-		role: 'Murarz',
-		category: 'construction',
-		location: 'Kraków',
-		experience: 12,
-		available: true
-	},
-	{
-		id: '3',
-		name: 'Maria Wiśniewska',
-		role: 'Pielęgniarka',
-		category: 'healthcare',
-		location: 'Gdańsk',
-		experience: 8,
-		available: false
-	},
-	{
-		id: '4',
-		name: 'Piotr Zieliński',
-		role: 'Mechanik samochodowy',
-		category: 'automotive',
-		location: 'Wrocław',
-		experience: 15,
-		available: true
-	},
-	{
-		id: '5',
-		name: 'Katarzyna Lewandowska',
-		role: 'Nauczycielka',
-		category: 'education',
-		location: 'Poznań',
-		experience: 10,
-		available: true
-	},
-	{
-		id: '6',
-		name: 'Tomasz Kamiński',
-		role: 'Rolnik',
-		category: 'agriculture',
-		location: 'Lublin',
-		experience: 20,
-		available: true
-	},
-	{
-		id: '7',
-		name: 'Marek Wójcik',
-		role: 'Elektryk',
-		category: 'construction',
-		location: 'Katowice',
-		experience: 7,
-		available: false
-	},
-	{
-		id: '8',
-		name: 'Ewa Szymańska',
-		role: 'Kucharz',
-		category: 'gastronomy',
-		location: 'Lublin',
-		experience: 6,
-		available: true
-	},
-	{
-		id: '9',
-		name: 'Andrzej Dąbrowski',
-		role: 'Kierowca TIR',
-		category: 'transport',
-		location: 'Łódź',
-		experience: 14,
-		available: true
-	},
-	{
-		id: '10',
-		name: 'Zofia Mazur',
-		role: 'Sprzedawca',
-		category: 'trade',
-		location: 'Szczecin',
-		experience: 3,
-		available: true
-	},
-	{
-		id: '11',
-		name: 'Krzysztof Jankowski',
-		role: 'Hydraulik',
-		category: 'services',
-		location: 'Bydgoszcz',
-		experience: 11,
-		available: true
-	},
-	{
-		id: '12',
-		name: 'Agnieszka Wojciechowska',
-		role: 'Ogrodnik',
-		category: 'agriculture',
-		location: 'Rzeszów',
-		experience: 9,
-		available: false
-	}
-];
+const MOCK_EMPLOYEES = ALL_EMPLOYEES;
 
 function findDistrictByEmployee(employeeName: string) {
 	return LUBLIN_DISTRICTS.find((d) =>
@@ -275,7 +166,8 @@ function EmployeeMapPopup({
 	const { t } = useTranslation();
 	const isLublin = employee.location.toLowerCase() === 'lublin';
 	const district = isLublin ? findDistrictByEmployee(employee.name) : null;
-	const coords = district?.center || CITY_COORDS[employee.location.toLowerCase()];
+	const coords =
+		district?.center || CITY_COORDS[employee.location.toLowerCase()];
 	const fallback = { lat: 51.9194, lng: 19.1451 }; // center of Poland
 
 	return (
@@ -299,7 +191,12 @@ function EmployeeMapPopup({
 								streetViewControl={false}
 								mapTypeControl={false}
 								fullscreenControl={false}>
-								{isLublin && <DistrictPolygon employeeName={employee.name} employeeRole={employee.role} />}
+								{isLublin && (
+									<DistrictPolygon
+										employeeName={employee.name}
+										employeeRole={employee.role}
+									/>
+								)}
 							</Map>
 						</APIProvider>
 					) : (
@@ -365,7 +262,7 @@ export default function SearchResults() {
 					{categoryOrder.map((category) => (
 						<section key={category}>
 							{/* Category banner */}
-							<div className="relative w-full h-24 rounded-xl overflow-hidden mb-5">
+							<div className="relative w-full h-42 rounded-xl overflow-hidden mb-5">
 								<img
 									src={CATEGORY_IMAGES[category]}
 									alt={t(`dashboard.categories.${category}` as const)}
