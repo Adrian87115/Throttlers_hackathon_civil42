@@ -52,9 +52,6 @@ def _issue_token_pair(user: User) -> dict:
     return {
         "accessToken": access_token,
         "refreshToken": refresh_token,
-        # Backward-compatible aliases for existing clients.
-        "access_token": access_token,
-        "refresh_token": refresh_token,
         "token_type": "bearer",
     }
 
