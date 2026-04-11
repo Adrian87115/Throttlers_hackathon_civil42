@@ -147,6 +147,44 @@ export default function UserProfile() {
 	const [editing, setEditing] = useState(false);
 	const [saving, setSaving] = useState(false);
 	const [draft, setDraft] = useState<Partial<EditableFields>>({});
+	const [pdfFiles, setPdfFiles] = useState<{
+		cv?: File;
+		certificates: File[];
+		recommendations: File[];
+	}>({ certificates: [], recommendations: [] });
+
+	type PdfGroup = 'cv' | 'certificates' | 'recommendations';
+
+	function handleMockPdfUpload(group: PdfGroup, files: FileList | null) {
+		if (!files || files.length === 0) return;
+
+		const selected = Array.from(files);
+		const invalid = selected.find(
+			(file) =>
+				file.type !== 'application/pdf' &&
+				!file.name.toLowerCase().endsWith('.pdf')
+		);
+
+		if (invalid) {
+			alert('Mozna dodawac tylko pliki PDF.');
+			return;
+		}
+
+		if (group === 'cv') {
+			setPdfFiles((prev) => ({ ...prev, cv: selected[0] }));
+			alert(`Mock upload CV: ${selected[0].name}`);
+			return;
+		}
+
+		if (group === 'certificates') {
+			setPdfFiles((prev) => ({ ...prev, certificates: selected }));
+			alert(`Mock upload certyfikatow: ${selected.length} plik(ow)`);
+			return;
+		}
+
+		setPdfFiles((prev) => ({ ...prev, recommendations: selected }));
+		alert(`Mock upload rekomendacji: ${selected.length} plik(ow)`);
+	}
 
 	function buildDraft(p: UserProfileData): Partial<EditableFields> {
 		return {
@@ -539,6 +577,68 @@ export default function UserProfile() {
 							Brak kwalifikacji — kliknij &quot;Edytuj&quot; aby dodać
 						</p>
 					)}
+				</BaseDimmedBackground>
+
+				<BaseDimmedBackground>
+					<h2 className="text-lg font-semibold text-gray-900 mb-3">
+						Dokumenty PDF
+					</h2>
+					<p className="text-sm text-gray-600 mb-4">
+						Dodaj CV, certyfikaty oraz rekomendacje (mock upload przez alert).
+					</p>
+
+					<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+						<div className="space-y-2">
+							<p className="text-sm font-medium text-gray-900">CV</p>
+							<Input
+								type="file"
+								accept=".pdf,application/pdf"
+								onChange={(e) => handleMockPdfUpload('cv', e.target.files)}
+								className="text-gray-900 file:mr-3 file:rounded-md file:border-0 file:bg-primary-blue/10 file:px-2 file:py-1 file:text-primary-blue"
+							/>
+							{pdfFiles.cv && (
+								<p className="text-xs text-gray-500 truncate">
+									{pdfFiles.cv.name}
+								</p>
+							)}
+						</div>
+
+						<div className="space-y-2">
+							<p className="text-sm font-medium text-gray-900">Certyfikaty</p>
+							<Input
+								type="file"
+								multiple
+								accept=".pdf,application/pdf"
+								onChange={(e) =>
+									handleMockPdfUpload('certificates', e.target.files)
+								}
+								className="text-gray-900 file:mr-3 file:rounded-md file:border-0 file:bg-primary-blue/10 file:px-2 file:py-1 file:text-primary-blue"
+							/>
+							{pdfFiles.certificates.length > 0 && (
+								<p className="text-xs text-gray-500 truncate">
+									{pdfFiles.certificates.length} plik(ow)
+								</p>
+							)}
+						</div>
+
+						<div className="space-y-2">
+							<p className="text-sm font-medium text-gray-900">Rekomendacje</p>
+							<Input
+								type="file"
+								multiple
+								accept=".pdf,application/pdf"
+								onChange={(e) =>
+									handleMockPdfUpload('recommendations', e.target.files)
+								}
+								className="text-gray-900 file:mr-3 file:rounded-md file:border-0 file:bg-primary-blue/10 file:px-2 file:py-1 file:text-primary-blue"
+							/>
+							{pdfFiles.recommendations.length > 0 && (
+								<p className="text-xs text-gray-500 truncate">
+									{pdfFiles.recommendations.length} plik(ow)
+								</p>
+							)}
+						</div>
+					</div>
 				</BaseDimmedBackground>
 			</div>
 		</BaseContentWrapper>

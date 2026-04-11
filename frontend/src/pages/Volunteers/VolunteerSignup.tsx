@@ -1,6 +1,9 @@
 import BaseButton from '@/components/Buttons/BaseButton';
 import BaseContentWrapper from '@/components/Wrappers/BaseContentWrapper';
 import { Input } from '@/components/ui/input';
+import { useAuth } from '@/contexts/AuthUserContext';
+import { useAuthenticatedApi } from '@/hooks/useAuthenticatedApi';
+import { getMyProfile } from '@/services/auth';
 import { AppRoutePaths } from '@/types/types';
 import {
 	AlertTriangle,
@@ -12,7 +15,7 @@ import {
 	Truck,
 	Wrench
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const AVAILABILITY_OPTIONS = [
@@ -51,6 +54,9 @@ const EQUIPMENT_OPTIONS = [
 
 export default function VolunteerSignup() {
 	const navigate = useNavigate();
+	const { getUser } = useAuth();
+	const { callWithToken } = useAuthenticatedApi();
+	const user = getUser();
 	const [submitted, setSubmitted] = useState(false);
 
 	const [form, setForm] = useState({
@@ -66,6 +72,50 @@ export default function VolunteerSignup() {
 		acceptTerms: false,
 		acceptAlerts: false
 	});
+
+	useEffect(() => {
+		let isCancelled = false;
+
+		async function prefillFromLoggedUser() {
+			if (!user) return;
+
+			try {
+				const profile = (await callWithToken(getMyProfile)) as {
+					first_name?: string;
+					last_name?: string;
+					email?: string;
+					phone?: string;
+					org_phone?: string;
+					city?: string;
+					district?: string;
+				};
+
+				if (isCancelled) return;
+
+				setForm((prev) => ({
+					...prev,
+					firstName: prev.firstName || profile.first_name || '',
+					lastName: prev.lastName || profile.last_name || '',
+					email: prev.email || profile.email || user.email || '',
+					phone: prev.phone || profile.phone || profile.org_phone || '',
+					city: prev.city || profile.city || '',
+					district: prev.district || profile.district || ''
+				}));
+			} catch {
+				if (isCancelled) return;
+				setForm((prev) => ({
+					...prev,
+					email: prev.email || user.email || ''
+				}));
+			}
+		}
+
+		prefillFromLoggedUser();
+
+		return () => {
+			isCancelled = true;
+		};
+	}, [callWithToken, user]);
 
 	function handleChange(
 		e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -140,6 +190,7 @@ export default function VolunteerSignup() {
 									name="firstName"
 									value={form.firstName}
 									onChange={handleChange}
+									className="text-gray-900"
 									required
 								/>
 							</div>
@@ -151,6 +202,7 @@ export default function VolunteerSignup() {
 									name="lastName"
 									value={form.lastName}
 									onChange={handleChange}
+									className="text-gray-900"
 									required
 								/>
 							</div>
@@ -166,6 +218,7 @@ export default function VolunteerSignup() {
 									type="email"
 									value={form.email}
 									onChange={handleChange}
+									className="text-gray-900"
 									required
 									autoComplete="email"
 								/>
@@ -179,6 +232,7 @@ export default function VolunteerSignup() {
 									type="tel"
 									value={form.phone}
 									onChange={handleChange}
+									className="text-gray-900"
 									autoComplete="tel"
 								/>
 							</div>
@@ -193,6 +247,7 @@ export default function VolunteerSignup() {
 									name="city"
 									value={form.city}
 									onChange={handleChange}
+									className="text-gray-900"
 									required
 								/>
 							</div>
@@ -204,6 +259,7 @@ export default function VolunteerSignup() {
 									name="district"
 									value={form.district}
 									onChange={handleChange}
+									className="text-gray-900"
 									placeholder="np. Czuby Północne"
 								/>
 							</div>
@@ -304,7 +360,7 @@ export default function VolunteerSignup() {
 							onChange={handleChange}
 							rows={4}
 							placeholder="np. prawo jazdy kat. C, kurs pierwszej pomocy, obsługa wózka widłowego, znajomość języka ukraińskiego..."
-							className="w-full rounded-lg border border-dimmed-blue bg-transparent px-3 py-2 text-sm outline-none focus:border-blue-300 focus:ring-[3px] focus:ring-dimmed-blue resize-none"
+							className="w-full rounded-lg border border-dimmed-blue bg-transparent px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-300 focus:ring-[3px] focus:ring-dimmed-blue resize-none"
 						/>
 					</fieldset>
 
