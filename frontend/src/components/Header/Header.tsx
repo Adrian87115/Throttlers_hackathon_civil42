@@ -58,7 +58,7 @@ export default function Header() {
 		return () => {
 			isCancelled = true;
 		};
-	}, [callWithToken, user]);
+	}, [user]);
 
 	function handleLogout() {
 		resetAuth();

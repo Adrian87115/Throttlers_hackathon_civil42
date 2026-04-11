@@ -16,10 +16,30 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const AVAILABILITY_OPTIONS = [
-	{ id: 'social', label: 'Akcje społeczne', desc: 'Zbiórki, wydarzenia charytatywne', icon: Heart },
-	{ id: 'crisis', label: 'Sytuacje kryzysowe', desc: 'Powodzie, pożary, klęski żywiołowe', icon: AlertTriangle },
-	{ id: 'logistics', label: 'Wsparcie logistyczne', desc: 'Transport, magazynowanie, organizacja', icon: Truck },
-	{ id: 'medical', label: 'Pomoc medyczna', desc: 'Pierwsza pomoc, opieka nad poszkodowanymi', icon: Shield }
+	{
+		id: 'social',
+		label: 'Akcje społeczne',
+		desc: 'Zbiórki, wydarzenia charytatywne',
+		icon: Heart
+	},
+	{
+		id: 'crisis',
+		label: 'Sytuacje kryzysowe',
+		desc: 'Powodzie, pożary, klęski żywiołowe',
+		icon: AlertTriangle
+	},
+	{
+		id: 'logistics',
+		label: 'Wsparcie logistyczne',
+		desc: 'Transport, magazynowanie, organizacja',
+		icon: Truck
+	},
+	{
+		id: 'medical',
+		label: 'Pomoc medyczna',
+		desc: 'Pierwsza pomoc, opieka nad poszkodowanymi',
+		icon: Shield
+	}
 ] as const;
 
 const EQUIPMENT_OPTIONS = [
@@ -47,7 +67,9 @@ export default function VolunteerSignup() {
 		acceptAlerts: false
 	});
 
-	function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
+	function handleChange(
+		e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+	) {
 		setForm({ ...form, [e.target.name]: e.target.value });
 	}
 
@@ -306,21 +328,6 @@ export default function VolunteerSignup() {
 								Akceptuję regulamin platformy Open Hands i wyrażam zgodę na
 								przetwarzanie moich danych osobowych w celu koordynacji działań
 								wolontariackich. *
-							</span>
-						</label>
-
-						<label className="flex items-start gap-3 cursor-pointer">
-							<input
-								type="checkbox"
-								checked={form.acceptAlerts}
-								onChange={(e) =>
-									setForm({ ...form, acceptAlerts: e.target.checked })
-								}
-								className="mt-0.5 h-4 w-4 rounded border-gray-300 accent-primary-blue"
-							/>
-							<span className="text-sm text-gray-700">
-								Chcę otrzymywać powiadomienia o pilnych akcjach kryzysowych w
-								moim regionie (alerty Open Hands).
 							</span>
 						</label>
 					</fieldset>

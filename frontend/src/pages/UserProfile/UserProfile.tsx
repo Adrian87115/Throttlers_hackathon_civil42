@@ -1,4 +1,5 @@
 import BaseDimmedBackground from '@/components/BaseDimmedBackground/BaseDimmedBackground';
+import { Input } from '@/components/ui/input';
 import BaseContentWrapper from '@/components/Wrappers/BaseContentWrapper';
 import { useAuthenticatedApi } from '@/hooks/useAuthenticatedApi';
 import { getMyProfile, patchMyProfile } from '@/services/auth';
@@ -97,9 +98,6 @@ function VerificationBadge({ status }: { status?: string }) {
 	);
 }
 
-const inputClass =
-	'w-full h-9 rounded-md border border-dimmed-blue bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-blue-300 focus-visible:ring-dimmed-blue focus-visible:ring-[3px]';
-
 export default function UserProfile() {
 	const { callWithToken } = useAuthenticatedApi();
 	const [profile, setProfile] = useState<UserProfileData | null>(null);
@@ -109,11 +107,35 @@ export default function UserProfile() {
 	const [saving, setSaving] = useState(false);
 	const [draft, setDraft] = useState<Partial<EditableFields>>({});
 
+	function buildDraft(p: UserProfileData): Partial<EditableFields> {
+		return {
+			username: p.username ?? '',
+			first_name: p.first_name ?? '',
+			last_name: p.last_name ?? '',
+			phone: p.phone ?? p.org_phone ?? '',
+			city: p.city ?? '',
+			district: p.district ?? '',
+			skills: p.skills ?? '',
+			experience_years: p.experience_years ?? undefined,
+			category: p.category ?? '',
+			role: p.role ?? '',
+			available: p.available ?? true,
+			organization_name: p.organization_name ?? '',
+			nip: p.nip ?? '',
+			regon: p.regon ?? '',
+			org_address: p.org_address ?? '',
+			org_phone: p.org_phone ?? '',
+			contact_person: p.contact_person ?? '',
+			institution_type: p.institution_type ?? ''
+		};
+	}
+
 	useEffect(() => {
 		async function fetchProfile() {
 			try {
 				const res = (await callWithToken(getMyProfile)) as UserProfileData;
 				setProfile(res);
+				setDraft(buildDraft(res));
 			} catch {
 				setError('Nie udało się pobrać danych profilu');
 			} finally {
@@ -126,32 +148,13 @@ export default function UserProfile() {
 
 	function startEditing() {
 		if (!profile) return;
-		setDraft({
-			username: profile.username,
-			first_name: profile.first_name || '',
-			last_name: profile.last_name || '',
-			phone: profile.phone || '',
-			city: profile.city || '',
-			district: profile.district || '',
-			skills: profile.skills || '',
-			experience_years: profile.experience_years,
-			category: profile.category || '',
-			role: profile.role || '',
-			available: profile.available,
-			organization_name: profile.organization_name || '',
-			nip: profile.nip || '',
-			regon: profile.regon || '',
-			org_address: profile.org_address || '',
-			org_phone: profile.org_phone || '',
-			contact_person: profile.contact_person || '',
-			institution_type: profile.institution_type || ''
-		});
+		setDraft(buildDraft(profile));
 		setEditing(true);
 	}
 
 	function cancelEditing() {
+		if (profile) setDraft(buildDraft(profile));
 		setEditing(false);
-		setDraft({});
 	}
 
 	function updateDraft<K extends keyof EditableFields>(
@@ -328,16 +331,16 @@ export default function UserProfile() {
 							<div className="space-y-2">
 								{editing ? (
 									<div className="flex gap-3">
-										<input
-											className={inputClass}
+										<Input
+											className="text-gray-900"
 											placeholder="Imię"
 											value={draft.first_name || ''}
 											onChange={(e) =>
 												updateDraft('first_name', e.target.value)
 											}
 										/>
-										<input
-											className={inputClass}
+										<Input
+											className="text-gray-900"
 											placeholder="Nazwisko"
 											value={draft.last_name || ''}
 											onChange={(e) => updateDraft('last_name', e.target.value)}
@@ -477,7 +480,7 @@ export default function UserProfile() {
 					</h2>
 					{editing ? (
 						<textarea
-							className="w-full rounded-lg border border-dimmed-blue bg-white px-3 py-2 text-sm outline-none focus:border-blue-300 focus:ring-[3px] focus:ring-dimmed-blue resize-none min-h-[120px]"
+							className="w-full rounded-lg border border-dimmed-blue bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-300 focus:ring-[3px] focus:ring-dimmed-blue resize-none min-h-[120px]"
 							placeholder="Opisz swoje kwalifikacje, certyfikaty, umiejętności..."
 							value={draft.skills || ''}
 							onChange={(e) => updateDraft('skills', e.target.value)}
@@ -528,13 +531,15 @@ function EditableInfoCard({
 	const currentValue =
 		draftValue !== undefined && draftValue !== null
 			? String(draftValue)
-			: field.value || '';
-	const currentSecondaryValue =
-		field.secondaryKey &&
-		(draft[field.secondaryKey as keyof EditableFields] !== undefined &&
-		draft[field.secondaryKey as keyof EditableFields] !== null
-			? String(draft[field.secondaryKey as keyof EditableFields])
-			: field.secondaryValue || '');
+			: (field.value ?? '');
+	const secondaryDraftValue = field.secondaryKey
+		? draft[field.secondaryKey as keyof EditableFields]
+		: undefined;
+	const currentSecondaryValue = field.secondaryKey
+		? secondaryDraftValue !== undefined && secondaryDraftValue !== null
+			? String(secondaryDraftValue)
+			: (field.secondaryValue ?? '')
+		: '';
 
 	if (editing && !field.readonly) {
 		return (
@@ -546,8 +551,8 @@ function EditableInfoCard({
 					<p className="text-xs text-gray-500 uppercase tracking-wide">
 						{field.label}
 					</p>
-					<input
-						className={inputClass}
+					<Input
+						className="text-gray-900"
 						type={field.type || 'text'}
 						value={currentValue}
 						onChange={(e) => {
@@ -566,8 +571,8 @@ function EditableInfoCard({
 							<p className="text-xs text-gray-500 uppercase tracking-wide pt-1">
 								{field.secondaryLabel}
 							</p>
-							<input
-								className={inputClass}
+							<Input
+								className="text-gray-900"
 								value={currentSecondaryValue}
 								onChange={(e) =>
 									onUpdate(
