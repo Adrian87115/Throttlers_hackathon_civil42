@@ -1,13 +1,18 @@
 export const AppRoutePaths = {
 	// auth
-	loginPage: () => '/login'
+	loginPage: () => '/login',
+	mainDashboard: () => '/',
+	userProfile: () => `/me/profile`,
+	userSettings: () => `/settings`
 };
 
 export const AppApiPaths = {
 	// auth
 	// auth
 	deleteUser: () => `auth/me`,
-	postAppRefreshToken: () => `auth/refresh-token`
+	postAppRefreshToken: () => `auth/refresh-token`,
+
+	googleOAuthLogin: () => `auth/google`
 };
 
 export const SEARCH_DEBOUNCE_MS = 500;

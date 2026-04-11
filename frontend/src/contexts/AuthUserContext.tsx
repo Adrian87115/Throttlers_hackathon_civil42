@@ -1,5 +1,4 @@
-import { postRefreshSpotifyToken, postRefreshToken } from '@/services/auth';
-import { FriendsWebsocket } from '@/services/websockets/wsname';
+import { postRefreshToken } from '@/services/auth';
 import type { AccessToken, RefreshToken } from '@/types/ids';
 import { AccessTokenPayload, AppUser } from '@/types/user';
 import { WSGlobalResponse, WSSharedEventName } from '@/types/websocket';
@@ -86,15 +85,6 @@ export default function AuthUserContext({ children }: Props) {
 		return res;
 	}
 
-	async function refreshSpotifyAccessToken(
-		accessToken: AccessToken,
-		refreshToken: RefreshToken
-	): Promise<void> {
-		if (!refreshToken) throw new Error('refresh token not found');
-
-		await postRefreshSpotifyToken(accessToken, refreshToken);
-	}
-
 	// also handles ws token update
 	async function getAccessToken(): Promise<AccessToken> {
 		if (!auth.accessToken || !auth.refreshToken) {
@@ -105,7 +95,6 @@ export default function AuthUserContext({ children }: Props) {
 			if (isAccessTokenExpiring()) {
 				console.log('issuing refresh');
 				const { accessToken, refreshToken } = await refreshAccessToken();
-				await refreshSpotifyAccessToken(accessToken, refreshToken);
 
 				await refreshSocketToken(accessToken);
 				await setAuthTokens(accessToken, refreshToken);
@@ -180,7 +169,7 @@ export default function AuthUserContext({ children }: Props) {
 
 	function setWebsocketToken(newToken: string) {
 		//! IMPORTANT: make sure all WS clients are included here
-		setAllWebsocketAuthTokens([FriendsWebsocket], newToken);
+		setAllWebsocketAuthTokens([], newToken);
 	}
 
 	async function refreshWebsocketToken(
@@ -219,7 +208,7 @@ export default function AuthUserContext({ children }: Props) {
 	async function refreshSocketToken(newToken: string) {
 		//! IMPORTANT: make sure all WS clients are included here
 		setWebsocketToken(newToken);
-		await refreshAllSockets([FriendsWebsocket], newToken);
+		await refreshAllSockets([], newToken);
 	}
 
 	async function issueNewTokens() {

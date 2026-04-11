@@ -32,8 +32,8 @@ export default function Login() {
 		navigate(AppRoutePaths.mainDashboard());
 	}
 
-	async function handleSpotifyLogin() {
-		window.location.href = AppApiPaths.spotifyOAuthLogin();
+	async function handleGoogleLogin() {
+		window.location.href = AppApiPaths.googleOAuthLogin();
 	}
 
 	return (
@@ -80,8 +80,8 @@ export default function Login() {
 							<BaseButton
 								endIcon={<FaSpotify size={20} />}
 								className="w-fit"
-								onClick={handleSpotifyLogin}>
-								{t('login.spotifyLogin')}
+								onClick={handleGoogleLogin}>
+								{t('login.googleLogin')}
 							</BaseButton>
 
 							<BaseButton type="submit">{t('login.login')}</BaseButton>

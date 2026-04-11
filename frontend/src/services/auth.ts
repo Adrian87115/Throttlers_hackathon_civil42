@@ -18,23 +18,6 @@ export async function postRefreshToken(refreshToken: RefreshToken): Promise<{
 	return res;
 }
 
-export async function postRefreshSpotifyToken(
-	token: AccessToken,
-	refreshToken: RefreshToken
-): Promise<void> {
-	const config: RequestConfig = {
-		token
-	};
-
-	await apiClient.post(
-		AppApiPaths.postSpotifyRefreshToken(),
-		{
-			refreshToken
-		},
-		config
-	);
-}
-
 export async function deleteMyAccount(token: AccessToken) {
 	const config: RequestConfig = {
 		token

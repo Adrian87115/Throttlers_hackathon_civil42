@@ -13,7 +13,8 @@
 		"loginToApp": "Zaloguj się do aplikacji",
 		"email": "Email",
 		"password": "Hasło",
-		"login": "Zaloguj się"
+		"login": "Zaloguj się",
+		"googleLogin": "Zaloguj się z Google"
 	},
 	"notFound": {
 		"title": "Strona nie istnieje",
@@ -57,6 +58,66 @@
 		"seconds_one": "{{count}} sekunda",
 		"seconds_few": "{{count}} sekundy",
 		"seconds_many": "{{count}} sekund"
+	},
+	"settings": {
+		"title": "Ustawienia",
+		"save": "Zapisz",
+		"editSuccess": "Pomyślnie zapisano zmiany",
+		"editFail": "Wystąpił błąd podczas zapisywania zmian",
+
+		"editModal": {
+			"title": "Zapisać zmiany?",
+			"description": "Potwierdź zapisanie dokonanych zmian",
+			"continueText": "Zapisz"
+		},
+
+		"profile": {
+			"title": "Profil",
+			"profilePrivacy": "Prywatność profilu",
+			"profilePrivacyDescription": "Pozwól innym użytkownikom wyświetlać informacje o Twoim profilu",
+			"profilePrivacySelectModalLabel": "Prywatność",
+			"profilePrivacyPrivate": "Prywatny",
+			"profilePrivacyPublic": "Publiczny",
+			"profilePrivacyFriends": "Znajomi",
+
+			"avatarVisibilityDescription": "W przypadku opcji innej niż publiczna, dla nieuprawnionych użytkowników wyświetlana będzie domyślna ikona",
+			"avatarVisibility": "Widoczność zdjęcia profilowego",
+			"nickname": "Wyświetlana nazwa",
+			"country": "Narodowość",
+			"countryNotFound": "Nie znaleziono kraju",
+			"searchCountry": "Wyszukaj kraj...",
+
+			"nicknameChecking": "Sprawdzanie",
+			"nicknameAvailable": "Dostępny",
+			"nicknameUnavailable": "Nie dostępny",
+			"invalidNickname": "Nieprawidłowy pseudonim — nie spełnia wymaganych kryteriów. Nick powinien mieć od 3 do 16 znaków, zawierać tylko litery, cyfry oraz _ lub -, zaczynać się i kończyć od litery lub cyfry i nie może zawierać wulgaryzmów."
+		},
+
+		"blocks": {
+			"title": "Zablokowane konta",
+			"description": "Zablokowani użytkownicy nie będą mogli wysyłać Ci zaproszeń do znajomych, przeglądać Twojego profilu ani zapraszać Cię do gry.",
+			"noBlockedUsers": "Brak zablokowanych użytkowników",
+			"unblock": "Odblokuj",
+			"unblockSuccess": "Użytkownik został odblokowany",
+			"loadMore": "Załaduj więcej",
+			"unblockModal": {
+				"title": "Potwierdź odblokowanie",
+				"description": "Czy napewno chcesz odblokować konto tego użytkownika?",
+				"confirmText": "Odblokuj"
+			}
+		}
+	},
+	"sessionExpiredModal": {
+		"title": "Sesja wygasła",
+		"description": "Zostałeś wylogowany ze względu na zbyt długą nieaktywność, zaloguj się ponownie"
+	},
+	"header": {
+		"yourAccount": "Twoje konto",
+		"profile": "Profil",
+		"settings": "Ustawienia",
+		"logout": "Wyloguj się",
+		"mainDashboard": "Strona główna",
+		"playNow": "Graj"
 	},
 	"errors": {
 		"endpoint_name": "error description"
