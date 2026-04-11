@@ -1,0 +1,64 @@
+{
+	"shared": {
+		"yes": "Tak",
+		"no": "Nie",
+		"cancel": "Anuluj",
+		"continue": "Kontynuuj",
+		"goBack": "Wróć",
+		"choose": "Wybierz",
+		"ok": "Ok"
+	},
+	"login": {
+		"welcome": "Witaj!",
+		"loginToApp": "Zaloguj się do aplikacji",
+		"email": "Email",
+		"password": "Hasło",
+		"login": "Zaloguj się"
+	},
+	"notFound": {
+		"title": "Strona nie istnieje",
+		"desc": "Strona pod tym adresem nie istnieje"
+	},
+	"customCalendar": {
+		"days": {
+			"monday": "Pn",
+			"tuesday": "Wt",
+			"wednesday": "Śr",
+			"thursday": "Czw",
+			"friday": "Pt",
+			"saturday": "Sob",
+			"sunday": "Ndz"
+		},
+		"months": {
+			"january": "Styczeń",
+			"february": "Luty",
+			"march": "Marzec",
+			"april": "Kwiecień",
+			"may": "Maj",
+			"june": "Czerwiec",
+			"july": "Lipiec",
+			"august": "Sierpień",
+			"september": "Wrzesień",
+			"october": "Październik",
+			"november": "Listopad",
+			"december": "Grudzień"
+		}
+	},
+	"time": {
+		"days_one": "{{count}} dzień",
+		"days_few": "{{count}} dni",
+		"days_many": "{{count}} dni",
+		"hours_one": "{{count}} godzina",
+		"hours_few": "{{count}} godziny",
+		"hours_many": "{{count}} godzin",
+		"minutes_one": "{{count}} minuta",
+		"minutes_few": "{{count}} minuty",
+		"minutes_many": "{{count}} minut",
+		"seconds_one": "{{count}} sekunda",
+		"seconds_few": "{{count}} sekundy",
+		"seconds_many": "{{count}} sekund"
+	},
+	"errors": {
+		"endpoint_name": "error description"
+	}
+}

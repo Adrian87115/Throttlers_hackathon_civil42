@@ -1,0 +1,551 @@
+@import 'tw-animate-css';
+@layer theme, base, mui, components, utilities;
+@import 'tailwindcss';
+
+@theme {
+	--color-bg-primary-dark: #101010;
+	--color-bg-darker: #080808;
+	--color-bg-lighter: #181818;
+	--color-primary-blue: #a1ceef;
+	--color-dimmed-blue: #344155;
+
+	--padding-header: 120px;
+
+	--color-base-muted-foreground: #807f94;
+	--color-grayed-out: #77777e;
+	--color-dashboard-background: #fafafa;
+	--color-base-border: #e2e8f0;
+	--shadow-base-tile: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+	--shadow-base: rgba(0, 0, 0, 0.15) 0px 2px 8px;
+	--shadow-base-dimmed-background: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+}
+
+@custom-variant dark (&:is(.dark *));
+
+body {
+	overflow-x: hidden;
+	overflow-y: visible !important;
+	font-family: 'Inter', sans-serif;
+}
+
+#root {
+	min-height: 100vh;
+	height: 100%;
+	overflow-y: auto;
+}
+
+/* width */
+::-webkit-scrollbar {
+	width: 10px;
+	height: 3px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+	background: var(--color-bg-primary-dark);
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+	background: var(--color-dimmed-blue);
+	border-radius: 9999px;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+	background: var(--color-primary-blue);
+}
+
+/* PAGER STYLES */
+
+.pager-item,
+.page-skip {
+	padding: 4px;
+	width: 32px;
+	height: 32px;
+	text-align: center;
+	cursor: pointer;
+	font-weight: 500;
+	transition: background-color 0.3s ease-in-out;
+	border-radius: 5px;
+	border: 1px solid white;
+	background-color: var(--color-bg-lighter);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.page-skip {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.pager-item.active {
+	border: 1px solid var(--color-primary-blue);
+	background-color: var(--color-dimmed-blue);
+	color: var(--neutral100);
+}
+
+.pager-item:hover,
+.page-skip:hover {
+	background-color: var(--neutral80);
+}
+
+.pager-item.active:hover {
+	background-color: var(--primary60);
+}
+
+/* END OF PAGER STYLES */
+
+.input-modal {
+	position: absolute;
+	border: 1px solid var(--color-gray-500);
+	top: 120%;
+	left: 0;
+	width: 100%;
+	max-height: 200px;
+	padding: 10px 0;
+	overflow-y: auto;
+	border-radius: 10px;
+
+	--tw-shadow-color: color-mix(
+		in oklab,
+		var(--color-primary-blue) var(--tw-shadow-alpha),
+		transparent
+	);
+
+	--tw-shadow: var(--tw-shadow-color, rgba(0, 0, 0, 0.15)) 0px 2px 8px;
+	box-shadow:
+		var(--tw-inset-shadow), var(--tw-inset-ring-shadow),
+		var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+
+	opacity: 0;
+	transform: scale(0);
+	transform-origin: top center;
+	transition: all 0.3s ease-in-out;
+	z-index: 20;
+	background-color: var(--color-bg-primary-dark);
+}
+
+.input-modal.active {
+	opacity: 1;
+	transform: scale(1);
+}
+
+.dropdown-item {
+	padding: 5px 20px;
+	cursor: pointer;
+	transition: background-color 0.2s ease-in-out;
+	background-color: transparent;
+	color: white;
+}
+
+.dropdown-item:hover {
+	background-color: rgba(52, 65, 85, 0.6);
+}
+
+.dropdown-item.smaller {
+	font-size: 12px;
+	padding: 5px;
+}
+
+.bottom-top-hover-button {
+	border-bottom: 1px solid white;
+	position: relative;
+	padding: 10px 20px;
+	cursor: pointer;
+	border-top-left-radius: 5px;
+	border-top-right-radius: 5px;
+	overflow: hidden;
+}
+
+.bottom-top-hover-button::before {
+	content: '';
+	position: absolute;
+	width: 100%;
+	left: 0;
+	bottom: 0;
+	height: 0;
+	background-color: rgba(96, 105, 117, 0.4);
+	transition: height 0.3s ease-in-out;
+}
+
+.bottom-top-hover-button:hover::before {
+	height: 100%;
+}
+
+.hoverable-info:hover > .popup-label {
+	opacity: 1;
+}
+
+.popup-label {
+	border-radius: 12px;
+	background-color: var(--color-bg-lighter);
+	border: 1px solid var(--color-gray-500);
+	color: white;
+	padding: 4px 15px;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.3s ease-in-out;
+	position: absolute;
+	left: 50%;
+	min-height: 23px;
+	text-align: center;
+	line-height: 16px;
+	transform: translateX(-50%) translateY(-100%);
+	max-width: 300px;
+	width: max-content;
+	top: -10px;
+	font-size: 13px;
+	text-wrap: balance;
+	z-index: 100;
+}
+
+.login-holder {
+	--tw-shadow-color: color-mix(
+		in oklab,
+		var(--color-dimmed-blue) var(--tw-shadow-alpha, 1),
+		transparent
+	);
+	--tw-shadow: 0 25px 50px -12px var(--tw-shadow-color, rgb(0 0 0 / 0.25));
+
+	animation: pulse-shadow 2s ease-in-out infinite alternate;
+}
+
+.bottom-top-hover-button {
+	border-bottom: 1px solid white;
+	position: relative;
+	padding: 10px 20px;
+	cursor: pointer;
+	border-top-left-radius: 5px;
+	border-top-right-radius: 5px;
+	overflow: hidden;
+}
+
+.bottom-top-hover-button::before {
+	content: '';
+	position: absolute;
+	width: 100%;
+	left: 0;
+	bottom: 0;
+	height: 0;
+	background-color: rgba(96, 105, 117, 0.4);
+	transition: height 0.3s ease-in-out;
+}
+
+.bottom-top-hover-button:hover::before {
+	height: 100%;
+}
+
+.logo-holder > .profile-pict {
+	transition: all 0.2s ease-in-out;
+	border: 4px solid transparent;
+}
+
+.logo-holder:hover > .profile-pict {
+	--tw-shadow: 0 10px 30px -12px var(--tw-shadow-color, rgb(0 0 0 / 0.25));
+
+	border: 4px solid black;
+	transform: scale(1.05);
+}
+
+@keyframes pulse-shadow {
+	0% {
+		box-shadow:
+			var(--tw-inset-shadow), var(--tw-inset-ring-shadow),
+			var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+	}
+	100% {
+		box-shadow: none;
+	}
+}
+
+.hoverable-text {
+	color: white;
+	transition: all 0.3s ease-in-out;
+
+	position: relative;
+
+	&::before {
+		position: absolute;
+		content: '';
+		bottom: 0px;
+		left: 50%;
+		transform: translateX(-50%);
+		width: 100%;
+		height: 2px;
+		transition: all 0.3s ease-in-out;
+		opacity: 0;
+	}
+}
+
+.hoverable-text:hover {
+	color: var(--color-primary-blue);
+
+	&::before {
+		bottom: -5px;
+		width: 110%;
+		opacity: 1;
+		background-color: var(--color-primary-blue);
+	}
+}
+
+.overlay {
+	position: fixed;
+	transition: 0.2s ease-in-out;
+	opacity: 0;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: rgba(7, 6, 6, 0.8);
+	pointer-events: none;
+	z-index: 200;
+}
+
+.overlay.active {
+	opacity: 1;
+	pointer-events: all;
+}
+
+.button-shadow {
+	--tw-shadow-color: color-mix(
+		in oklab,
+		var(--color-dimmed-blue) var(--tw-shadow-alpha),
+		transparent
+	);
+
+	--tw-shadow: var(--tw-shadow-color, rgba(0, 0, 0, 0.15)) 0px 2px 8px;
+	box-shadow:
+		var(--tw-inset-shadow), var(--tw-inset-ring-shadow),
+		var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+}
+
+.no-mui-transform {
+	transform: scale(1, 1);
+}
+
+.page-menu > li:not(.selection-box) {
+	padding: 10px 20px;
+}
+
+.page-menu > li.active {
+	font-weight: 600;
+}
+
+/* DETAILS CALENDAR */
+
+.details-calendar {
+	padding: 20px;
+}
+
+.details-calendar table {
+	border-spacing: 0 10px;
+	border-collapse: separate;
+}
+
+.details-calendar td {
+	padding: 8px 10px;
+	text-align: center;
+}
+
+.details-calendar td.colored {
+	background-color: var(--color-purple-900);
+	color: white;
+}
+
+.week-calendar td {
+	padding: 2px 10px;
+	text-align: center;
+}
+
+.week-calendar td.colored {
+	background-color: var(--color-purple-900);
+	color: white;
+}
+
+.details-calendar td.colored.roundedLeft {
+	border-top-left-radius: 10px;
+	border-bottom-left-radius: 10px;
+}
+
+.week-calendar td.colored.roundedLeft {
+	border-top-left-radius: 9999px;
+	border-bottom-left-radius: 9999px;
+}
+
+.week-calendar td.colored.roundedRight {
+	border-top-right-radius: 9999px;
+	border-bottom-right-radius: 9999px;
+}
+
+.details-calendar td.colored.roundedRight {
+	border-top-right-radius: 10px;
+	border-bottom-right-radius: 10px;
+}
+
+.details-calendar td.currentDay,
+.week-calendar td.currentDay {
+	position: relative;
+}
+
+.details-calendar td.currentDay::after,
+.week-calendar td.currentDay::after {
+	position: absolute;
+	content: attr(data-day-text);
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%);
+	--size: 36px;
+	width: var(--size);
+	height: var(--size);
+	padding: 2px;
+	border-radius: 9999px;
+	background-color: var(--color-purple-600);
+	color: white;
+}
+
+.week-calendar td.currentDay::after {
+	background-color: transparent;
+	border: 2px dashed var(--color-purple-500);
+}
+
+.details-calendar th,
+.week-calendar th {
+	padding: 10px 15px;
+	text-align: center;
+	font-weight: 500;
+	--size: 54px;
+	width: var(--size);
+	max-width: var(--size);
+}
+
+.details-calendar th {
+	padding: 0 15px;
+}
+
+.week-calendar thead tr {
+	padding: 30px 50px;
+}
+
+/* END OF DETAILS CALENDAR */
+
+@theme inline {
+	--radius-sm: calc(var(--radius) - 4px);
+	--radius-md: calc(var(--radius) - 2px);
+	--radius-lg: var(--radius);
+	--radius-xl: calc(var(--radius) + 4px);
+	--color-background: var(--background);
+	--color-foreground: var(--foreground);
+	--color-card: var(--card);
+	--color-card-foreground: var(--card-foreground);
+	--color-popover: var(--popover);
+	--color-popover-foreground: var(--popover-foreground);
+	--color-primary: var(--primary);
+	--color-primary-foreground: var(--primary-foreground);
+	--color-secondary: var(--secondary);
+	--color-secondary-foreground: var(--secondary-foreground);
+	--color-muted: var(--muted);
+	--color-muted-foreground: var(--muted-foreground);
+	--color-accent: var(--accent);
+	--color-accent-foreground: var(--accent-foreground);
+	--color-destructive: var(--destructive);
+	--color-border: var(--border);
+	--color-input: var(--input);
+	--color-ring: var(--ring);
+	--color-chart-1: var(--chart-1);
+	--color-chart-2: var(--chart-2);
+	--color-chart-3: var(--chart-3);
+	--color-chart-4: var(--chart-4);
+	--color-chart-5: var(--chart-5);
+	--color-sidebar: var(--sidebar);
+	--color-sidebar-foreground: var(--sidebar-foreground);
+	--color-sidebar-primary: var(--sidebar-primary);
+	--color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+	--color-sidebar-accent: var(--sidebar-accent);
+	--color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+	--color-sidebar-border: var(--sidebar-border);
+	--color-sidebar-ring: var(--sidebar-ring);
+}
+
+:root {
+	--radius: 0.625rem;
+	--background: oklch(1 0 0);
+	--foreground: oklch(0.145 0 0);
+	--card: oklch(1 0 0);
+	--card-foreground: oklch(0.145 0 0);
+	--popover: oklch(1 0 0);
+	--popover-foreground: oklch(0.145 0 0);
+	--primary: oklch(0.205 0 0);
+	--primary-foreground: oklch(0.985 0 0);
+	--secondary: oklch(0.97 0 0);
+	--secondary-foreground: oklch(0.205 0 0);
+	--muted: oklch(0.97 0 0);
+	--muted-foreground: oklch(0.556 0 0);
+	--accent: oklch(0.97 0 0);
+	--accent-foreground: oklch(0.205 0 0);
+	--destructive: oklch(0.577 0.245 27.325);
+	--border: oklch(0.922 0 0);
+	--input: oklch(0.922 0 0);
+	--ring: oklch(0.708 0 0);
+	--chart-1: oklch(0.646 0.222 41.116);
+	--chart-2: oklch(0.6 0.118 184.704);
+	--chart-3: oklch(0.398 0.07 227.392);
+	--chart-4: oklch(0.828 0.189 84.429);
+	--chart-5: oklch(0.769 0.188 70.08);
+	--sidebar: oklch(0.985 0 0);
+	--sidebar-foreground: oklch(0.145 0 0);
+	--sidebar-primary: oklch(0.205 0 0);
+	--sidebar-primary-foreground: oklch(0.985 0 0);
+	--sidebar-accent: oklch(0.97 0 0);
+	--sidebar-accent-foreground: oklch(0.205 0 0);
+	--sidebar-border: oklch(0.922 0 0);
+	--sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+	--background: oklch(0.145 0 0);
+	--foreground: oklch(0.985 0 0);
+	--card: oklch(0.205 0 0);
+	--card-foreground: oklch(0.985 0 0);
+	--popover: oklch(0.205 0 0);
+	--popover-foreground: oklch(0.985 0 0);
+	--primary: oklch(0.922 0 0);
+	--primary-foreground: oklch(0.205 0 0);
+	--secondary: oklch(0.269 0 0);
+	--secondary-foreground: oklch(0.985 0 0);
+	--muted: oklch(0.269 0 0);
+	--muted-foreground: oklch(0.708 0 0);
+	--accent: oklch(0.269 0 0);
+	--accent-foreground: oklch(0.985 0 0);
+	--destructive: oklch(0.704 0.191 22.216);
+	--border: oklch(1 0 0 / 10%);
+	--input: oklch(1 0 0 / 15%);
+	--ring: oklch(0.556 0 0);
+	--chart-1: oklch(0.488 0.243 264.376);
+	--chart-2: oklch(0.696 0.17 162.48);
+	--chart-3: oklch(0.769 0.188 70.08);
+	--chart-4: oklch(0.627 0.265 303.9);
+	--chart-5: oklch(0.645 0.246 16.439);
+	--sidebar: oklch(0.205 0 0);
+	--sidebar-foreground: oklch(0.985 0 0);
+	--sidebar-primary: oklch(0.488 0.243 264.376);
+	--sidebar-primary-foreground: oklch(0.985 0 0);
+	--sidebar-accent: oklch(0.269 0 0);
+	--sidebar-accent-foreground: oklch(0.985 0 0);
+	--sidebar-border: oklch(1 0 0 / 10%);
+	--sidebar-ring: oklch(0.556 0 0);
+}
+
+@layer base {
+	* {
+		@apply border-border outline-ring/50;
+	}
+	body {
+		@apply bg-background text-foreground;
+	}
+}
