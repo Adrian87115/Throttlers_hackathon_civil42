@@ -52,8 +52,6 @@ def ensure_user(db, spec):
             hashed_password = hash_password(spec["password"]),
             role = spec["role"],
             account_type = spec["account_type"],
-            is_verified = True,
-            is_active = True,
             is_deleted = False,
         )
         db.add(user)
@@ -63,8 +61,6 @@ def ensure_user(db, spec):
         user.email = spec["email"]
         user.role = spec["role"]
         user.account_type = spec["account_type"]
-        user.is_verified = True
-        user.is_active = True
         user.is_deleted = False
         user.hashed_password = hash_password(spec["password"])
         db.add(user)

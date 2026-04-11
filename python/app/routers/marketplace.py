@@ -41,8 +41,6 @@ router = APIRouter(tags = ["Marketplace"])
 def _assert_active_account(user: User) -> None:
     if user.is_deleted:
         raise HTTPException(status_code = 403, detail = "Account is deleted")
-    if not user.is_active:
-        raise HTTPException(status_code = 403, detail = "Account is inactive")
 
 
 def _has_gov_access(user: User) -> bool:
@@ -232,7 +230,7 @@ def search_workers(skill_ids: list[int] | None = Query(default = None),
         _assert_active_account(current_user)
 
     query = db.query(WorkerProfile).join(User, User.id == WorkerProfile.user_id)
-    query = query.filter(User.is_deleted.is_(False), User.is_active.is_(True), User.is_verified.is_(True))
+    query = query.filter(User.is_deleted.is_(False))
 
     if skill_ids:
         query = query.filter(WorkerProfile.skills.any(Skill.id.in_(skill_ids)))

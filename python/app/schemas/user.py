@@ -29,8 +29,6 @@ class UserPublicOut(BaseModel):
 
 class UserOutAdvanced(UserOut):
     role: str
-    is_active: bool
-    is_verified: bool
     is_deleted: bool
 
     class Config:

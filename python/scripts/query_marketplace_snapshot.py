@@ -13,7 +13,7 @@ def main():
         users = run_query(
             db,
             """
-            SELECT username, role, account_type, is_active, is_verified
+            SELECT username, role, account_type
             FROM users
             WHERE username IN ('admin_seed', 'worker_alice', 'worker_bob', 'employer_acme', 'gov_ops')
             ORDER BY username

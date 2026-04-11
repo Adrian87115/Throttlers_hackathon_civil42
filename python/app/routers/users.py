@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.core.logging_config import logger
-from app.core.security import get_current_user, hash_password, validate_password, verify_password
+from app.core.security import get_current_user, get_current_user_allow_inactive, hash_password, validate_password, verify_password
 from app.db.session import get_db
 from app.models.marketplace import EmployerProfile, VerificationStatus
 from app.models.user import AccountType, User
@@ -26,8 +26,6 @@ def require_role(required_roles: list[str]):
 def _assert_active_admin(current_user: User) -> None:
     if current_user.is_deleted:
         raise HTTPException(status_code = 403, detail = "Account is deleted")
-    if not current_user.is_active:
-        raise HTTPException(status_code = 403, detail = "Account is inactive")
 
 
 def _assert_admin_hierarchy(actor: User, target: User) -> None:
@@ -103,13 +101,11 @@ def change_password(payload: ChangePasswordRequest,
 @router.post("/me/verification-request")
 def request_verification(payload: VerificationRequest,
                          db: Session = Depends(get_db),
-                         current_user: User = Depends(get_current_user)):
+                         current_user: User = Depends(get_current_user_allow_inactive)):
     if current_user.account_type != AccountType.employer:
         raise HTTPException(status_code = 403, detail = "Only employer accounts can request verification")
     if current_user.is_deleted:
         raise HTTPException(status_code = 403, detail = "Account is deleted")
-    if not current_user.is_verified:
-        raise HTTPException(status_code = 403, detail = "Email must be verified first")
 
     employer_profile = db.query(EmployerProfile).filter(EmployerProfile.user_id == current_user.id).first()
     if not employer_profile:
@@ -118,7 +114,6 @@ def request_verification(payload: VerificationRequest,
     employer_profile.verification_status = VerificationStatus.pending
     employer_profile.is_verified = False
     employer_profile.is_government_service = payload.target == "gov_service"
-    current_user.is_active = False
     if payload.target == "employer" and current_user.role == "gov_service":
         current_user.role = "user"
 
@@ -149,8 +144,6 @@ def update_user_role(user_id: int,
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code = 404, detail = "User not found")
-    if not user.is_verified:
-        raise HTTPException(status_code = 403, detail = "Account not verified")
     if user.is_deleted:
         raise HTTPException(status_code = 403, detail = "Account was deleted")
 
@@ -194,7 +187,6 @@ def list_pending_verifications(target: str = Query(default = "all"),
     query = query.filter(
         User.is_deleted.is_(False),
         User.account_type == AccountType.employer,
-        User.is_verified.is_(True),
         EmployerProfile.verification_status == VerificationStatus.pending,
     )
 
@@ -246,7 +238,6 @@ def approve_verification(user_id: int,
 
     employer_profile.verification_status = VerificationStatus.approved
     employer_profile.is_verified = True
-    user.is_active = True
 
     db.add(employer_profile)
     db.add(user)
@@ -282,7 +273,6 @@ def reject_verification(user_id: int,
 
     employer_profile.verification_status = VerificationStatus.rejected
     employer_profile.is_verified = False
-    user.is_active = False
 
     db.add(employer_profile)
     db.add(user)
@@ -293,7 +283,6 @@ def reject_verification(user_id: int,
 
 def soft_delete_user(db: Session, user: User):
     user.is_deleted = True
-    user.is_active = False
     db.add(user)
     db.commit()
 
@@ -340,8 +329,6 @@ def deactivate_user(user_id: int,
         raise HTTPException(status_code = 404, detail = "User not found")
     if user_to_deactivate.is_deleted:
         raise HTTPException(status_code = 403, detail = "Account was deleted")
-    if not user_to_deactivate.is_active:
-        raise HTTPException(status_code = 400, detail = "User is already inactive")
     if user_to_deactivate.role == "owner":
         raise HTTPException(status_code = 403, detail = "Owner account can not be modified")
     if user_to_deactivate.id == current_user.id:
@@ -351,7 +338,6 @@ def deactivate_user(user_id: int,
     if current_user.role == "admin" and user_to_deactivate.role == "admin":
         raise HTTPException(status_code = 403, detail = "Admins can not modify other admins")
 
-    user_to_deactivate.is_active = False
     db.add(user_to_deactivate)
     db.commit()
     logger.info(f"User id = {current_user.id} deactivated user id = {user_to_deactivate.id}")
@@ -369,10 +355,6 @@ def reactivate_user(user_id: int,
         raise HTTPException(status_code = 404, detail = "User not found")
     if user_to_reactivate.is_deleted:
         raise HTTPException(status_code = 403, detail = "Account was deleted")
-    if user_to_reactivate.is_active:
-        raise HTTPException(status_code = 400, detail = "User is already active")
-    if not user_to_reactivate.is_verified:
-        raise HTTPException(status_code = 400, detail = "User is not verified")
     if user_to_reactivate.role == "owner":
         raise HTTPException(status_code = 403, detail = "Owner account can not be modified")
     if user_to_reactivate.id == current_user.id:
@@ -382,7 +364,6 @@ def reactivate_user(user_id: int,
     if current_user.role == "admin" and user_to_reactivate.role == "admin":
         raise HTTPException(status_code = 403, detail = "Admins can not modify other admins")
 
-    user_to_reactivate.is_active = True
     db.add(user_to_reactivate)
     db.commit()
     logger.info(f"User id = {current_user.id} reactivated user id = {user_to_reactivate.id}")

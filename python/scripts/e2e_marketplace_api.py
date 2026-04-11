@@ -118,8 +118,6 @@ def ensure_seed_actor(username: str, email: str, account_type: AccountType, role
                 hashed_password = hash_password(SEED_PASSWORD),
                 account_type = account_type,
                 role = role,
-                is_verified = True,
-                is_active = True,
                 is_deleted = False,
             )
             db.add(user)
@@ -128,8 +126,6 @@ def ensure_seed_actor(username: str, email: str, account_type: AccountType, role
             user.email = email
             user.account_type = account_type
             user.role = role
-            user.is_verified = True
-            user.is_active = True
             user.is_deleted = False
             user.hashed_password = hash_password(SEED_PASSWORD)
             db.add(user)
@@ -175,8 +171,6 @@ def ensure_account_registered(username: str, email: str, account_type: str):
             assert_true(user.employer_profile is not None, f"Employer profile missing for {username}")
 
         # Simulate post-email verification for E2E continuation.
-        user.is_verified = True
-        user.is_active = True
         user.is_deleted = False
         user.hashed_password = hash_password(SEED_PASSWORD)
         db.add(user)

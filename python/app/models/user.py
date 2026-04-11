@@ -18,8 +18,6 @@ class User(Base):
     hashed_password = Column(String, nullable = False)
     role = Column(String, default = "user", nullable = False)
     account_type = Column(Enum(AccountType, name = "account_type"), nullable = True)
-    is_verified = Column(Boolean, default = False, nullable = False)
-    is_active = Column(Boolean, default = False, nullable = False)
     created_at = Column(DateTime(timezone = True), nullable = False, server_default = func.now())
     updated_at = Column(DateTime(timezone = True), nullable = False, server_default = func.now(), onupdate = func.now())
 
