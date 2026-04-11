@@ -18,6 +18,15 @@ class UserOut(UserBase):
     class Config:
         from_attributes = True
 
+
+class UserPublicOut(BaseModel):
+    id: int
+    username: str
+    account_type: str | None = None
+
+    class Config:
+        from_attributes = True
+
 class UserOutAdvanced(UserOut):
     role: str
     is_active: bool

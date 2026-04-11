@@ -18,12 +18,14 @@ from app.models.user import AccountType, User
 from app.schemas.marketplace import (
     ApplicationCreate,
     ApplicationOut,
+    ApplicationStatusUpdate,
     ContactChannelCreate,
     ContactChannelOut,
     EmployerProfileOut,
     EmployerProfileUpdate,
     OpportunityCreate,
     OpportunityOut,
+    OpportunityStatusUpdate,
     SkillCreate,
     SkillOut,
     WorkerProfileOut,
@@ -43,6 +45,17 @@ def _assert_active_account(user: User) -> None:
 
 def _has_gov_access(user: User) -> bool:
     return user.role in {"gov_service", "admin", "owner"}
+
+
+def _is_service_account(user: User) -> bool:
+    return user.role == "gov_service" and user.account_type == AccountType.employer
+
+
+def _assert_service_owner(user: User, opportunity: Opportunity) -> None:
+    if not _is_service_account(user):
+        raise HTTPException(status_code = 403, detail = "Only service accounts can perform this action")
+    if opportunity.employer_id != user.id:
+        raise HTTPException(status_code = 403, detail = "Not allowed for this opportunity")
 
 
 def _can_view_visibility(visibility: ContactVisibility, requester: User | None, owner_id: int) -> bool:
@@ -292,8 +305,8 @@ def create_opportunity(payload: OpportunityCreate,
                        db: Session = Depends(get_db),
                        current_user: User = Depends(get_current_user)):
     _assert_active_account(current_user)
-    if current_user.account_type != AccountType.employer:
-        raise HTTPException(status_code = 403, detail = "Only employer accounts can create opportunities")
+    if not _is_service_account(current_user):
+        raise HTTPException(status_code = 403, detail = "Only service accounts can create opportunities")
 
     employer_profile = db.query(EmployerProfile).filter(EmployerProfile.user_id == current_user.id).first()
     if not employer_profile:
@@ -338,6 +351,63 @@ def create_opportunity(payload: OpportunityCreate,
         status = opportunity.status,
         skills = [SkillOut.model_validate(skill) for skill in opportunity.required_skills],
     )
+
+
+@router.patch("/opportunities/{opportunity_id}/status", response_model = OpportunityOut)
+def update_opportunity_status(opportunity_id: int,
+                              payload: OpportunityStatusUpdate,
+                              db: Session = Depends(get_db),
+                              current_user: User = Depends(get_current_user)):
+    _assert_active_account(current_user)
+
+    opportunity = db.query(Opportunity).filter(Opportunity.id == opportunity_id, Opportunity.is_deleted.is_(False)).first()
+    if not opportunity:
+        raise HTTPException(status_code = 404, detail = "Opportunity not found")
+
+    _assert_service_owner(current_user, opportunity)
+
+    if opportunity.status == OpportunityStatus.closed and payload.status != OpportunityStatus.closed:
+        raise HTTPException(status_code = 400, detail = "Closed opportunity cannot be reopened")
+
+    opportunity.status = payload.status
+    db.add(opportunity)
+    db.commit()
+    db.refresh(opportunity)
+
+    return OpportunityOut(
+        id = opportunity.id,
+        employer_profile_id = opportunity.employer_profile_id,
+        employer_id = opportunity.employer_id,
+        title = opportunity.title,
+        description = opportunity.description,
+        compensation_type = opportunity.compensation_type,
+        budget_note = opportunity.budget_note,
+        latitude = opportunity.latitude,
+        longitude = opportunity.longitude,
+        city = opportunity.city,
+        region = opportunity.region,
+        status = opportunity.status,
+        skills = [SkillOut.model_validate(skill) for skill in opportunity.required_skills],
+    )
+
+
+@router.delete("/opportunities/{opportunity_id}")
+def delete_opportunity(opportunity_id: int,
+                       db: Session = Depends(get_db),
+                       current_user: User = Depends(get_current_user)):
+    _assert_active_account(current_user)
+
+    opportunity = db.query(Opportunity).filter(Opportunity.id == opportunity_id, Opportunity.is_deleted.is_(False)).first()
+    if not opportunity:
+        raise HTTPException(status_code = 404, detail = "Opportunity not found")
+
+    _assert_service_owner(current_user, opportunity)
+
+    opportunity.is_deleted = True
+    opportunity.status = OpportunityStatus.closed
+    db.add(opportunity)
+    db.commit()
+    return {"detail": "Opportunity deleted"}
 
 
 @router.get("/opportunities", response_model = list[OpportunityOut])
@@ -442,9 +512,38 @@ def list_opportunity_applications(opportunity_id: int,
     if not opportunity:
         raise HTTPException(status_code = 404, detail = "Opportunity not found")
 
-    is_owner = opportunity.employer_id == current_user.id
-    if not is_owner and current_user.role not in {"admin", "owner"}:
-        raise HTTPException(status_code = 403, detail = "Not allowed to view applications")
+    _assert_service_owner(current_user, opportunity)
 
     applications = db.query(Application).filter(Application.opportunity_id == opportunity_id).order_by(Application.id.desc()).all()
     return applications
+
+
+@router.patch("/opportunities/{opportunity_id}/applications/{application_id}/status", response_model = ApplicationOut)
+def update_application_status(opportunity_id: int,
+                              application_id: int,
+                              payload: ApplicationStatusUpdate,
+                              db: Session = Depends(get_db),
+                              current_user: User = Depends(get_current_user)):
+    _assert_active_account(current_user)
+
+    opportunity = db.query(Opportunity).filter(Opportunity.id == opportunity_id, Opportunity.is_deleted.is_(False)).first()
+    if not opportunity:
+        raise HTTPException(status_code = 404, detail = "Opportunity not found")
+
+    _assert_service_owner(current_user, opportunity)
+
+    application = db.query(Application).filter(
+        Application.id == application_id,
+        Application.opportunity_id == opportunity_id,
+    ).first()
+    if not application:
+        raise HTTPException(status_code = 404, detail = "Application not found")
+
+    if payload.status == "completed" and application.status != "accepted":
+        raise HTTPException(status_code = 400, detail = "Only accepted applications can be completed")
+
+    application.status = payload.status
+    db.add(application)
+    db.commit()
+    db.refresh(application)
+    return application

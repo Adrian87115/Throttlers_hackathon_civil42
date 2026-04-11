@@ -115,8 +115,16 @@ class OpportunityOut(BaseModel):
     skills: list[SkillOut] = []
 
 
+class OpportunityStatusUpdate(BaseModel):
+    status: OpportunityStatus
+
+
 class ApplicationCreate(BaseModel):
     message: str | None = None
+
+
+class ApplicationStatusUpdate(BaseModel):
+    status: Literal["accepted", "rejected", "completed"]
 
 
 class ApplicationOut(BaseModel):

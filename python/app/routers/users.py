@@ -4,8 +4,9 @@ from pydantic import BaseModel
 
 from app.db.session import get_db
 from app.core.security import hash_password, get_current_user, validate_password
-from app.schemas.user import UserOut, SafeUserOut
+from app.schemas.user import UserOut, SafeUserOut, UserPublicOut
 from app.models.user import User
+from app.models.marketplace import EmployerProfile
 from app.core.security import verify_password, hash_password
 from app.schemas.user import UserOutAdvanced
 from app.core.logging_config import logger
@@ -57,9 +58,12 @@ def change_password(payload: ChangePasswordRequest,
         logger.error(f"Error changing password for user id = {getattr(current_user, 'id', None)}: {e}", exc_info = True)
         raise HTTPException(status_code = 500, detail = "Internal server error")
 
-@router.get("/", response_model = list[UserOut])
-def list_users(db: Session = Depends(get_db)):
+@router.get("/", response_model = list[UserPublicOut])
+def list_users(db: Session = Depends(get_db),
+               current_user: User = Depends(get_current_user)):
     try:
+        if current_user.role not in ["admin", "owner"]:
+            raise HTTPException(status_code = 403, detail = "Only admin or owner can list users")
         users = db.query(User).all()
         logger.info(f"Retrieved list of all users, count = {len(users)}")
         return users
@@ -97,15 +101,27 @@ def update_user_role(user_id: int, role_update: RoleUpdate,
         if user.is_deleted:
             logger.warning(f"Attempt to update role of deleted account user id = {user.id}")
             raise HTTPException(status_code = 403, detail = "Account was deleted")
-        if role_update.role not in ["user", "moderator", "admin"]:
+        if role_update.role not in ["user", "moderator", "admin", "gov_service"]:
             logger.warning(f"Invalid role '{role_update.role}' provided by user id = {current_user.id}")
             raise HTTPException(status_code = 400, detail = "Invalid role")
+        if role_update.role == "gov_service" and user.account_type is None:
+            logger.warning(f"Attempt to assign gov_service role to user id = {user.id} without account_type")
+            raise HTTPException(status_code = 400, detail = "Service role requires employer account")
+        if role_update.role == "gov_service" and user.account_type.value != "employer":
+            logger.warning(f"Attempt to assign gov_service role to non-employer user id = {user.id}")
+            raise HTTPException(status_code = 400, detail = "Service role requires employer account")
         if user.role == "owner":
             logger.warning(f"Attempt to change owner's role user id = {user.id} by user id = {current_user.id}")
             raise HTTPException(status_code = 403, detail = "Owner's role can not be changed")
         if user.id == current_user.id and role_update.role != "admin": # admin can not demote themselves
             logger.warning(f"Admin user id = {current_user.id} tried to demote themselves")
             raise HTTPException(status_code = 403, detail = "Admin can not change their own role or the role of other admins")
+
+        employer_profile = db.query(EmployerProfile).filter(EmployerProfile.user_id == user.id).first()
+        if employer_profile:
+            employer_profile.is_government_service = role_update.role == "gov_service"
+            db.add(employer_profile)
+
         user.role = role_update.role
         db.commit()
         db.refresh(user)
@@ -307,8 +323,12 @@ def get_username_from_id(user_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code = 404, detail = f"User with id {user_id} not found")
     return user.username
 
-@router.get("/{id}", response_model=UserOut)
-def get_user(id: int, db: Session = Depends(get_db)):
+@router.get("/{id}", response_model = UserPublicOut)
+def get_user(id: int,
+             db: Session = Depends(get_db),
+             current_user: User = Depends(get_current_user)):
+    if current_user.role not in ["admin", "owner"]:
+        raise HTTPException(status_code = 403, detail = "Only admin or owner can view user details")
     user = db.query(User).filter(User.id == id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
