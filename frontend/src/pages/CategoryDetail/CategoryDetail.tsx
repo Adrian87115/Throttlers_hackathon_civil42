@@ -33,7 +33,10 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { LUBLIN_DISTRICTS } from '../EmployeeMap/districts';
-import EmployeeCard, { type CategoryKey, type Employee } from '../MainDashboard/EmployeeCard';
+import EmployeeCard, {
+	type CategoryKey,
+	type Employee
+} from '../MainDashboard/EmployeeCard';
 
 const VALID_CATEGORIES: CategoryKey[] = [
 	'construction',
@@ -68,52 +71,62 @@ const CATEGORY_STYLES: Record<
 	construction: {
 		bg: '#1a1207',
 		text: 'text-amber-400',
-		image: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=400&q=80'
+		image:
+			'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=400&q=80'
 	},
 	agriculture: {
 		bg: '#071a0b',
 		text: 'text-green-400',
-		image: 'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=400&q=80'
+		image:
+			'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=400&q=80'
 	},
 	automotive: {
 		bg: '#0f0d1a',
 		text: 'text-violet-400',
-		image: 'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=400&q=80'
+		image:
+			'https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=400&q=80'
 	},
 	technology: {
 		bg: '#071219',
 		text: 'text-cyan-400',
-		image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&q=80'
+		image:
+			'https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&q=80'
 	},
 	healthcare: {
 		bg: '#1a070e',
 		text: 'text-rose-400',
-		image: 'https://images.unsplash.com/photo-1631815588090-d4bfec5b1ccb?w=400&q=80'
+		image:
+			'https://images.unsplash.com/photo-1631815588090-d4bfec5b1ccb?w=400&q=80'
 	},
 	education: {
 		bg: '#0d1419',
 		text: 'text-blue-400',
-		image: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400&q=80'
+		image:
+			'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400&q=80'
 	},
 	gastronomy: {
 		bg: '#1a0f07',
 		text: 'text-orange-400',
-		image: 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=400&q=80'
+		image:
+			'https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=400&q=80'
 	},
 	trade: {
 		bg: '#12071a',
 		text: 'text-purple-400',
-		image: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400&q=80'
+		image:
+			'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400&q=80'
 	},
 	transport: {
 		bg: '#07141a',
 		text: 'text-teal-400',
-		image: 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=400&q=80'
+		image:
+			'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=400&q=80'
 	},
 	services: {
 		bg: '#141007',
 		text: 'text-yellow-400',
-		image: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400&q=80'
+		image:
+			'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400&q=80'
 	}
 };
 
@@ -249,7 +262,8 @@ function EmployeeMapPopup({
 				<DialogHeader className="px-6 pt-6 pb-0">
 					<DialogTitle className="flex items-center gap-2 text-gray-900">
 						<MapPin size={18} className="text-primary-blue" />
-					{isAuthenticated ? employee.name : employee.role} — {employee.location}
+						{isAuthenticated ? employee.name : employee.role} —{' '}
+						{employee.location}
 					</DialogTitle>
 				</DialogHeader>
 				<div className="h-100 w-full">
@@ -352,8 +366,8 @@ export default function CategoryDetail() {
 			<section className="mb-6">
 				{!isAuthenticated && (
 					<div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-						Aby przegladac profile oraz szczegolowe informacje o osobach, zaloguj
-						sie.
+						Aby przegladac profile oraz szczegolowe informacje o osobach,
+						zaloguj sie.
 						<Link
 							to={AppRoutePaths.loginPage()}
 							className="ml-2 inline-flex font-semibold text-amber-900 underline underline-offset-2 hover:opacity-80">

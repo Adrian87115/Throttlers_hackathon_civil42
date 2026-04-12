@@ -1,7 +1,9 @@
 import { useAuth } from '@/contexts/AuthUserContext';
 import { useAuthenticatedApi } from '@/hooks/useAuthenticatedApi';
+import apiClient from '@/services/apiClient';
 import { getUserMe } from '@/services/auth';
-import { AppRoutePaths } from '@/types/types';
+import { getActiveCrisis } from '@/services/crisis';
+import { AppApiPaths, AppRoutePaths } from '@/types/types';
 import {
 	AlertTriangle,
 	Handshake,
@@ -20,6 +22,8 @@ import { BaseDropdown } from '../Dropdowns/BaseDropdown';
 import AppLogo from '../icons/AppLogo/AppLogo';
 import UserProfilePicture from '../icons/UserProfilePicture/UserProfilePicture';
 
+const CRISIS_STATUS_EVENT = 'crisis-status-changed';
+
 export default function Header() {
 	const { getUser, resetAuth } = useAuth();
 	const { callWithToken } = useAuthenticatedApi();
@@ -31,6 +35,7 @@ export default function Header() {
 	const [search, setSearch] = useState('');
 	const [searchOpen, setSearchOpen] = useState(false);
 	const [isOwner, setIsOwner] = useState(false);
+	const [hasActiveCrisis, setHasActiveCrisis] = useState(false);
 	const searchRef = useRef<HTMLInputElement>(null);
 
 	useEffect(() => {
@@ -60,6 +65,64 @@ export default function Header() {
 			isCancelled = true;
 		};
 	}, [user]);
+
+	useEffect(() => {
+		let isCancelled = false;
+		let isRefreshing = false;
+
+		async function resolveActiveCrisis() {
+			if (isRefreshing) return;
+			isRefreshing = true;
+
+			try {
+				if (user) {
+					const activeCrisis = await callWithToken(getActiveCrisis);
+					if (!isCancelled) {
+						setHasActiveCrisis(Boolean(activeCrisis));
+					}
+					return;
+				}
+
+				const activeCrisis = await apiClient.get(AppApiPaths.getActiveCrisis());
+				if (!isCancelled) {
+					setHasActiveCrisis(Boolean(activeCrisis));
+				}
+			} catch {
+				if (!isCancelled) {
+					setHasActiveCrisis(false);
+				}
+			} finally {
+				isRefreshing = false;
+			}
+		}
+
+		resolveActiveCrisis();
+		const intervalId = window.setInterval(resolveActiveCrisis, 30_000);
+
+		return () => {
+			isCancelled = true;
+			window.clearInterval(intervalId);
+		};
+	}, [callWithToken, user]);
+
+	useEffect(() => {
+		function handleCrisisStatusChanged(event: Event) {
+			const customEvent = event as CustomEvent<{ active?: boolean }>;
+			setHasActiveCrisis(Boolean(customEvent.detail?.active));
+		}
+
+		window.addEventListener(
+			CRISIS_STATUS_EVENT,
+			handleCrisisStatusChanged as EventListener
+		);
+
+		return () => {
+			window.removeEventListener(
+				CRISIS_STATUS_EVENT,
+				handleCrisisStatusChanged as EventListener
+			);
+		};
+	}, []);
 
 	function handleLogout() {
 		resetAuth();
@@ -107,7 +170,8 @@ export default function Header() {
 			to: AppRoutePaths.crisis(),
 			label: 'Kryzys',
 			icon: <AlertTriangle size={16} />,
-			isCrisis: true
+			isCrisis: true,
+			hasActiveCrisis
 		}
 	];
 
@@ -125,14 +189,19 @@ export default function Header() {
 				<nav className="hidden sm:flex items-center gap-1">
 					{navLinks.map((link) => {
 						const isActive = location.pathname === link.to;
-						const isCrisis = (link as { isCrisis?: boolean }).isCrisis;
+						const { isCrisis, hasActiveCrisis: crisisActive } = link as {
+							isCrisis?: boolean;
+							hasActiveCrisis?: boolean;
+						};
 						return (
 							<Link
 								key={`${link.to}-${link.label}`}
 								to={link.to}
 								className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${
 									isCrisis
-										? 'bg-red-600 text-white hover:bg-red-700 shadow-sm'
+										? crisisActive
+											? 'bg-red-600 text-white hover:bg-red-700 shadow-sm'
+											: 'border border-red-300 text-red-600 hover:border-red-400 hover:bg-red-50'
 										: isActive
 											? 'bg-primary-blue/10 text-primary-blue'
 											: 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'

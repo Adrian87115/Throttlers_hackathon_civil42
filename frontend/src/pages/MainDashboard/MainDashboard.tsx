@@ -122,11 +122,16 @@ export default function MainDashboard() {
 							alt="Państwowa Straż Pożarna"
 							className="h-30 object-contain"
 						/>
-						<img
-							src={Pck}
-							alt="Polski Czerwony Krzyż"
-							className="h-30 object-contain"
-						/>
+						<div className="flex flex-col items-center gap-2">
+							<img
+								src={Pck}
+								alt="Polski Czerwony Krzyż"
+								className="h-30 object-contain"
+							/>
+							<span className="text-sm font-medium text-gray-600">
+								Polski czerwony krzyz
+							</span>
+						</div>
 					</div>
 				</section>
 

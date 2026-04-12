@@ -39,6 +39,13 @@ import { LUBLIN_DISTRICTS } from '../EmployeeMap/districts';
 
 const GOOGLE_MAPS_API_KEY = envConfig.googlemaps.token || '';
 const LUBLIN_CENTER = { lat: 51.2465, lng: 22.5685 };
+const CRISIS_STATUS_EVENT = 'crisis-status-changed';
+
+function emitCrisisStatus(active: boolean) {
+	window.dispatchEvent(
+		new CustomEvent(CRISIS_STATUS_EVENT, { detail: { active } })
+	);
+}
 
 function buildReadonlyGuestCrisis(): CrisisData {
 	return {
@@ -1356,6 +1363,7 @@ export default function Crisis() {
 		try {
 			const newCrisis = await callWithToken(postStartCrisis, data);
 			setCrisis(newCrisis);
+			emitCrisisStatus(true);
 			setShowStartModal(false);
 			toast.success('Kryzys ogłoszony — powiadomienia wysłane');
 		} catch {
@@ -1371,6 +1379,7 @@ export default function Crisis() {
 				created_by: 'current_user'
 			};
 			setCrisis(mockCrisis);
+			emitCrisisStatus(true);
 			setShowStartModal(false);
 			toast.success('Kryzys ogłoszony — powiadomienia wysłane (mock)');
 		} finally {
@@ -1384,9 +1393,11 @@ export default function Crisis() {
 		try {
 			await callWithToken(postEndCrisis, crisis.id);
 			setCrisis(null);
+			emitCrisisStatus(false);
 			toast.success('Kryzys zakończony');
 		} catch {
 			setCrisis(null);
+			emitCrisisStatus(false);
 			toast.success('Kryzys zakończony (mock)');
 		} finally {
 			setEndingCrisis(false);

@@ -35,8 +35,7 @@ def _get_active_crisis(db: Session) -> Crisis | None:
 
 
 @router.get("/active", response_model = CrisisDataOut | None)
-def get_active_crisis(db: Session = Depends(get_db),
-                      _: User = Depends(get_current_user)):
+def get_active_crisis(db: Session = Depends(get_db)):
     return _get_active_crisis(db)
 
 
