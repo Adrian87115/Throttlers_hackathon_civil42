@@ -1414,6 +1414,9 @@ export default function Crisis() {
 
 	if (!crisis) {
 		if (!isVerifiedGovernmentAccount) {
+			const isUnverifiedGovOrg =
+				isGovernmentOrganization && !isVerifiedGovernmentAccount;
+
 			return (
 				<BaseContentWrapper className="px-8 py-10">
 					<div className="max-w-2xl mx-auto flex flex-col items-center text-center space-y-6">
@@ -1425,9 +1428,34 @@ export default function Crisis() {
 						</h1>
 						<p className="text-gray-500 max-w-md">
 							Aktualnie nie ma aktywnej sytuacji kryzysowej. Gdy kryzys zostanie
-							ogloszony, tutaj zobaczysz dotkniete dzielnice i bedziesz mogl
-							zglosic swoja dostepnosc.
+							ogłoszony, tutaj zobaczysz dotknięte dzielnice i będziesz mógł
+							zgłosić swoją dostępność.
 						</p>
+						{isUnverifiedGovOrg ? (
+							<div className="mt-2 w-full max-w-md rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+								<p className="font-semibold mb-1">
+									Twoje konto oczekuje na weryfikację
+								</p>
+								<p>
+									Ogłaszanie sytuacji kryzysowych jest dostępne wyłącznie dla
+									zweryfikowanych instytucji państwowych. Po zatwierdzeniu konta
+									przez administratora uzyskasz możliwość uruchomienia kryzysu.
+								</p>
+							</div>
+						) : (
+							<div className="mt-2 w-full max-w-md rounded-lg border border-dimmed-blue bg-blue-50 px-4 py-3 text-sm text-primary-blue">
+								<p className="font-semibold mb-1">
+									Ogłaszanie kryzysu — tylko instytucje państwowe
+								</p>
+								<p>
+									Uruchamianie sytuacji kryzysowych jest zarezerwowane dla
+									zweryfikowanych służb i instytucji państwowych (np. PSP,
+									Policja, MON, administracja rządowa). Jako użytkownik
+									prywatny lub organizacja pozarządowa możesz zgłaszać swoją
+									dostępność, gdy kryzys zostanie ogłoszony.
+								</p>
+							</div>
+						)}
 					</div>
 				</BaseContentWrapper>
 			);
