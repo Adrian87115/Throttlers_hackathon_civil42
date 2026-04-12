@@ -15,6 +15,7 @@ import {
 	Laptop,
 	Lock,
 	Phone,
+	Send,
 	Shield,
 	ShoppingCart,
 	Tractor,
@@ -350,7 +351,7 @@ export default function Volunteers() {
 											</>
 										) : (
 											<>
-												<Phone size={11} className="text-gray-400 shrink-0" />
+												<Send size={11} className="text-gray-400 shrink-0" />
 												<span className="text-xs text-primary-blue cursor-pointer hover:underline">
 													Wyślij wiadomość
 												</span>

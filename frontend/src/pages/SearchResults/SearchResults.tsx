@@ -2,11 +2,15 @@ import BaseContentWrapper from '@/components/Wrappers/BaseContentWrapper';
 import {
 	Dialog,
 	DialogContent,
+	DialogDescription,
 	DialogHeader,
 	DialogTitle
 } from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/AuthUserContext';
+import { useAuthenticatedApi } from '@/hooks/useAuthenticatedApi';
 import { ALL_EMPLOYEES } from '@/data/employees';
+import { ALL_VOLUNTEERS, type Volunteer } from '@/data/volunteers';
+import { getMyProfile } from '@/services/auth';
 import envConfig from '@/types/envConfig';
 import {
 	APIProvider,
@@ -14,7 +18,16 @@ import {
 	useMap,
 	useMapsLibrary
 } from '@vis.gl/react-google-maps';
-import { MapPin, Search } from 'lucide-react';
+import {
+	Briefcase,
+	HandHeart,
+	Lock,
+	MapPin,
+	Phone,
+	Search,
+	Send,
+	Users
+} from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
@@ -49,7 +62,6 @@ const CATEGORY_IMAGES: Record<CategoryKey, string> = {
 		'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=1200&q=80'
 };
 
-// Approximate coordinates for Polish cities used in mock data
 const CITY_COORDS: Record<string, { lat: number; lng: number }> = {
 	lublin: { lat: 51.2465, lng: 22.5685 },
 	kraków: { lat: 50.0647, lng: 19.945 },
@@ -62,8 +74,6 @@ const CITY_COORDS: Record<string, { lat: number; lng: number }> = {
 	bydgoszcz: { lat: 53.1235, lng: 18.0084 },
 	rzeszów: { lat: 50.0412, lng: 21.999 }
 };
-
-const MOCK_EMPLOYEES = ALL_EMPLOYEES;
 
 function findDistrictByEmployee(employeeName: string) {
 	return LUBLIN_DISTRICTS.find((d) =>
@@ -107,7 +117,6 @@ function DistrictPolygon({
 		});
 		polygonRef.current = polygon;
 
-		// Label overlay
 		const container = document.createElement('div');
 		container.style.cssText = `
 			position: absolute;
@@ -175,7 +184,7 @@ function EmployeeMapPopup({
 	const district = isLublin ? findDistrictByEmployee(employee.name) : null;
 	const coords =
 		district?.center || CITY_COORDS[employee.location.toLowerCase()];
-	const fallback = { lat: 51.9194, lng: 19.1451 }; // center of Poland
+	const fallback = { lat: 51.9194, lng: 19.1451 };
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
@@ -186,6 +195,15 @@ function EmployeeMapPopup({
 						{isAuthenticated ? employee.name : employee.role} —{' '}
 						{employee.location}
 					</DialogTitle>
+					{district && (
+						<DialogDescription className="flex items-center gap-1 text-sm text-gray-500 mt-0.5">
+							<MapPin size={12} className="text-gray-400 shrink-0" />
+							Dzielnica:{' '}
+							<span className="font-medium text-gray-700 ml-1">
+								{district.name}
+							</span>
+						</DialogDescription>
+					)}
 				</DialogHeader>
 				<div className="h-100 w-full">
 					{GOOGLE_MAPS_API_KEY ? (
@@ -219,16 +237,106 @@ function EmployeeMapPopup({
 	);
 }
 
+function VolunteerCard({
+	volunteer,
+	isAuthenticated,
+	isGovernmentOrg
+}: {
+	volunteer: Volunteer;
+	isAuthenticated: boolean;
+	isGovernmentOrg: boolean;
+}) {
+	const { t } = useTranslation();
+
+	return (
+		<div className="flex items-center gap-4 rounded-xl border border-base-border bg-white p-4 shadow-sm">
+			<div className="h-11 w-11 rounded-full bg-dimmed-blue/20 flex items-center justify-center shrink-0">
+				<Users size={20} className="text-primary-blue" />
+			</div>
+			<div className="flex-1 min-w-0">
+				<p className="text-sm font-semibold text-gray-900 truncate">
+					{isAuthenticated ? volunteer.name : '••••• •••••••'}
+				</p>
+				<p className="text-xs text-gray-500 truncate">
+					{volunteer.role} &middot;{' '}
+					{t(`dashboard.categories.${volunteer.category}` as const)} &middot;{' '}
+					{volunteer.experience}{' '}
+					{volunteer.experience === 1
+						? 'rok'
+						: volunteer.experience < 5
+							? 'lata'
+							: 'lat'}{' '}
+					dośw.
+				</p>
+				<div className="flex items-center gap-1 mt-1">
+					{!isAuthenticated ? (
+						<>
+							<Lock size={11} className="text-gray-400 shrink-0" />
+							<span className="text-xs text-gray-400 italic">
+								Zaloguj się, aby zobaczyć kontakt
+							</span>
+						</>
+					) : isGovernmentOrg ? (
+						<>
+							<Phone size={11} className="text-gray-400 shrink-0" />
+							<span className="text-xs text-primary-blue">{volunteer.phone}</span>
+						</>
+					) : (
+						<>
+							<Send size={11} className="text-gray-400 shrink-0" />
+							<span className="text-xs text-primary-blue cursor-pointer hover:underline">
+								Wyślij wiadomość
+							</span>
+						</>
+					)}
+				</div>
+			</div>
+			<div className="flex flex-col items-end gap-1.5 shrink-0">
+				<span
+					className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+						volunteer.available
+							? 'bg-green-100 text-green-700'
+							: 'bg-red-100 text-red-600'
+					}`}>
+					{volunteer.available ? 'Dostępny' : 'Niedostępny'}
+				</span>
+				<span className="flex items-center gap-1 text-xs text-gray-400">
+					<MapPin size={10} />
+					{volunteer.location}
+				</span>
+			</div>
+		</div>
+	);
+}
+
+type Tab = 'all' | 'employees' | 'volunteers';
+
 export default function SearchResults() {
 	const { t } = useTranslation();
 	const { auth } = useAuth();
+	const { callWithToken } = useAuthenticatedApi();
 	const isAuthenticated = auth.user !== null;
 	const [searchParams] = useSearchParams();
 	const query = searchParams.get('q')?.trim() || '';
 	const [mapEmployee, setMapEmployee] = useState<Employee | null>(null);
+	const [activeTab, setActiveTab] = useState<Tab>('all');
+	const [isGovernmentOrg, setIsGovernmentOrg] = useState(false);
 
-	const results = query
-		? MOCK_EMPLOYEES.filter(
+	useEffect(() => {
+		if (!isAuthenticated || auth.isLoading) return;
+		callWithToken(getMyProfile)
+			.then((profile: any) => {
+				setIsGovernmentOrg(
+					profile?.account_type === 'employer' &&
+						(profile?.is_government_service === true ||
+							profile?.institution_type === 'government')
+				);
+			})
+			.catch(() => {});
+	}, [isAuthenticated, auth.isLoading]);
+
+	const employeeResults: Employee[] = query
+		? ALL_EMPLOYEES.filter(
 				(emp) =>
 					emp.name.toLowerCase().includes(query.toLowerCase()) ||
 					emp.role.toLowerCase().includes(query.toLowerCase()) ||
@@ -239,8 +347,22 @@ export default function SearchResults() {
 			)
 		: [];
 
-	// Group results by category
-	const grouped = results.reduce(
+	const volunteerResults: Volunteer[] = query
+		? ALL_VOLUNTEERS.filter(
+				(v) =>
+					v.name.toLowerCase().includes(query.toLowerCase()) ||
+					v.role.toLowerCase().includes(query.toLowerCase()) ||
+					v.location.toLowerCase().includes(query.toLowerCase()) ||
+					t(`dashboard.categories.${v.category}` as const)
+						.toLowerCase()
+						.includes(query.toLowerCase())
+			)
+		: [];
+
+	const totalResults = employeeResults.length + volunteerResults.length;
+
+	// Group employees by category
+	const groupedEmployees = employeeResults.reduce(
 		(acc, emp) => {
 			if (!acc[emp.category]) acc[emp.category] = [];
 			acc[emp.category].push(emp);
@@ -249,11 +371,33 @@ export default function SearchResults() {
 		{} as Record<CategoryKey, Employee[]>
 	);
 
-	const categoryOrder = Object.keys(grouped) as CategoryKey[];
+	// Group volunteers by category
+	const groupedVolunteers = volunteerResults.reduce(
+		(acc, v) => {
+			if (!acc[v.category]) acc[v.category] = [];
+			acc[v.category].push(v);
+			return acc;
+		},
+		{} as Record<CategoryKey, Volunteer[]>
+	);
+
+	// Merged by category for "all" tab
+	const allCategories = Array.from(
+		new Set([
+			...Object.keys(groupedEmployees),
+			...Object.keys(groupedVolunteers)
+		])
+	) as CategoryKey[];
+
+	const tabs: { key: Tab; label: string; count: number; icon: React.ReactNode }[] = [
+		{ key: 'all', label: 'Wszyscy', count: totalResults, icon: <Search size={14} /> },
+		{ key: 'employees', label: 'Pracownicy', count: employeeResults.length, icon: <Briefcase size={14} /> },
+		{ key: 'volunteers', label: 'Wolontariusze', count: volunteerResults.length, icon: <HandHeart size={14} /> }
+	];
 
 	return (
 		<BaseContentWrapper className="px-8">
-			<section className="mb-8">
+			<section className="mb-6">
 				<h1 className="text-3xl font-bold text-gray-900">
 					{t('search.title')}
 				</h1>
@@ -268,43 +412,165 @@ export default function SearchResults() {
 				)}
 			</section>
 
-			{query && results.length > 0 ? (
-				<div className="space-y-10">
-					{categoryOrder.map((category) => (
-						<section key={category}>
-							{/* Category banner */}
-							<div className="relative w-full h-42 rounded-xl overflow-hidden mb-5">
-								<img
-									src={CATEGORY_IMAGES[category]}
-									alt={t(`dashboard.categories.${category}` as const)}
-									className="absolute inset-0 w-full h-full object-cover"
-								/>
-								<div className="absolute inset-0 bg-linear-to-r from-black/70 via-black/40 to-transparent" />
-								<div className="relative h-full flex items-center px-6 gap-3">
-									<h2 className="text-xl font-bold text-white">
-										{t(`dashboard.categories.${category}` as const)}
-									</h2>
-									<span className="text-sm text-white/70">
-										({grouped[category].length})
-									</span>
-								</div>
-							</div>
-
-							<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-								{grouped[category].map((employee) => (
-									<div key={employee.id} className="flex flex-col">
-										<EmployeeCard employee={employee} />
-										<button
-											onClick={() => setMapEmployee(employee)}
-											className="mt-2 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-base-border text-sm font-medium text-gray-600 hover:text-primary-blue hover:border-primary-blue hover:bg-primary-blue/5 transition-colors cursor-pointer">
-											<MapPin size={14} />
-											{t('search.showOnMap')}
-										</button>
-									</div>
-								))}
-							</div>
-						</section>
+			{query && totalResults > 0 && (
+				<div className="flex gap-2 mb-8 border-b border-base-border">
+					{tabs.map((tab) => (
+						<button
+							key={tab.key}
+							onClick={() => setActiveTab(tab.key)}
+							className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors cursor-pointer ${
+								activeTab === tab.key
+									? 'border-primary-blue text-primary-blue'
+									: 'border-transparent text-gray-500 hover:text-gray-900'
+							}`}>
+							{tab.icon}
+							{tab.label}
+							<span
+								className={`ml-1 text-xs px-1.5 py-0.5 rounded-full ${
+									activeTab === tab.key
+										? 'bg-primary-blue/10 text-primary-blue'
+										: 'bg-gray-100 text-gray-500'
+								}`}>
+								{tab.count}
+							</span>
+						</button>
 					))}
+				</div>
+			)}
+
+			{query && totalResults > 0 ? (
+				<div className="space-y-10">
+					{/* ALL tab — merged per category */}
+					{activeTab === 'all' && allCategories.map((category) => {
+						const emps = groupedEmployees[category] ?? [];
+						const vols = groupedVolunteers[category] ?? [];
+						const total = emps.length + vols.length;
+						return (
+							<section key={category}>
+								<div className="relative w-full h-42 rounded-xl overflow-hidden mb-5">
+									<img
+										src={CATEGORY_IMAGES[category]}
+										alt={t(`dashboard.categories.${category}` as const)}
+										className="absolute inset-0 w-full h-full object-cover"
+									/>
+									<div className="absolute inset-0 bg-linear-to-r from-black/70 via-black/40 to-transparent" />
+									<div className="relative h-full flex items-center px-6 gap-3">
+										<h2 className="text-xl font-bold text-white">
+											{t(`dashboard.categories.${category}` as const)}
+										</h2>
+										<span className="text-sm text-white/70">({total})</span>
+										{emps.length > 0 && (
+											<span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-white/20 text-white">
+												<Briefcase size={11} /> {emps.length}
+											</span>
+										)}
+										{vols.length > 0 && (
+											<span className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-white/20 text-white">
+												<HandHeart size={11} /> {vols.length}
+											</span>
+										)}
+									</div>
+								</div>
+								<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+									{emps.map((employee) => (
+										<div key={employee.id} className="flex flex-col">
+											<EmployeeCard employee={employee} />
+											<button
+												onClick={() => setMapEmployee(employee)}
+												className="mt-2 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-base-border text-sm font-medium text-gray-600 hover:text-primary-blue hover:border-primary-blue hover:bg-primary-blue/5 transition-colors cursor-pointer">
+												<MapPin size={14} />
+												{t('search.showOnMap')}
+											</button>
+										</div>
+									))}
+									{vols.map((volunteer) => (
+										<VolunteerCard
+											key={volunteer.id}
+											volunteer={volunteer}
+											isAuthenticated={isAuthenticated}
+											isGovernmentOrg={isGovernmentOrg}
+										/>
+									))}
+								</div>
+							</section>
+						);
+					})}
+
+					{/* EMPLOYEES tab */}
+					{activeTab === 'employees' && employeeResults.length > 0 && (
+						<div className="space-y-10">
+							{(Object.keys(groupedEmployees) as CategoryKey[]).map((category) => (
+								<section key={category}>
+									<div className="relative w-full h-42 rounded-xl overflow-hidden mb-5">
+										<img
+											src={CATEGORY_IMAGES[category]}
+											alt={t(`dashboard.categories.${category}` as const)}
+											className="absolute inset-0 w-full h-full object-cover"
+										/>
+										<div className="absolute inset-0 bg-linear-to-r from-black/70 via-black/40 to-transparent" />
+										<div className="relative h-full flex items-center px-6 gap-3">
+											<h2 className="text-xl font-bold text-white">
+												{t(`dashboard.categories.${category}` as const)}
+											</h2>
+											<span className="text-sm text-white/70">
+												({groupedEmployees[category].length})
+											</span>
+										</div>
+									</div>
+									<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+										{groupedEmployees[category].map((employee) => (
+											<div key={employee.id} className="flex flex-col">
+												<EmployeeCard employee={employee} />
+												<button
+													onClick={() => setMapEmployee(employee)}
+													className="mt-2 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-base-border text-sm font-medium text-gray-600 hover:text-primary-blue hover:border-primary-blue hover:bg-primary-blue/5 transition-colors cursor-pointer">
+													<MapPin size={14} />
+													{t('search.showOnMap')}
+												</button>
+											</div>
+										))}
+									</div>
+								</section>
+							))}
+						</div>
+					)}
+
+					{/* VOLUNTEERS tab */}
+					{activeTab === 'volunteers' && volunteerResults.length > 0 && (
+						<div className="space-y-10">
+							{(Object.keys(groupedVolunteers) as CategoryKey[]).map((category) => (
+								<section key={category}>
+									<div className="relative w-full h-42 rounded-xl overflow-hidden mb-5">
+										<img
+											src={CATEGORY_IMAGES[category]}
+											alt={t(`dashboard.categories.${category}` as const)}
+											className="absolute inset-0 w-full h-full object-cover"
+										/>
+										<div className="absolute inset-0 bg-linear-to-r from-black/70 via-black/40 to-transparent" />
+										<div className="relative h-full flex items-center px-6 gap-3">
+											<HandHeart size={18} className="text-white/70" />
+											<h3 className="text-xl font-bold text-white">
+												{t(`dashboard.categories.${category}` as const)}
+											</h3>
+											<span className="text-sm text-white/70">
+												({groupedVolunteers[category].length})
+											</span>
+										</div>
+									</div>
+									<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+										{groupedVolunteers[category].map((volunteer) => (
+											<VolunteerCard
+												key={volunteer.id}
+												volunteer={volunteer}
+												isAuthenticated={isAuthenticated}
+												isGovernmentOrg={isGovernmentOrg}
+											/>
+										))}
+									</div>
+								</section>
+							))}
+						</div>
+					)}
 				</div>
 			) : query ? (
 				<div className="flex flex-col items-center justify-center py-20 text-center">
