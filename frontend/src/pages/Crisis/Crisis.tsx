@@ -47,19 +47,6 @@ function emitCrisisStatus(active: boolean) {
 	);
 }
 
-function buildReadonlyGuestCrisis(): CrisisData {
-	return {
-		id: -1,
-		title: 'Publiczny podglad sytuacji kryzysowej',
-		description:
-			'Mapa prezentuje dzielnice objete zgloszeniami kryzysowymi w trybie tylko do odczytu.',
-		severity: 'high',
-		started_at: new Date().toISOString(),
-		affected_districts: LUBLIN_DISTRICTS.map((district) => district.id),
-		status: 'active',
-		created_by: 'system'
-	};
-}
 
 type CrisisViewerProfile = {
 	account_type?: string;
@@ -1329,7 +1316,7 @@ export default function Crisis() {
 			if (auth.isLoading) return;
 
 			if (!isLoggedIn) {
-				setCrisis(buildReadonlyGuestCrisis());
+				setCrisis(null);
 				setViewerProfile(null);
 				setLoading(false);
 				return;
