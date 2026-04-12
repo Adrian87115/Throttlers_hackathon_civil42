@@ -52,6 +52,8 @@ type CrisisViewerProfile = {
 	account_type?: string;
 	is_government_service?: boolean;
 	institution_type?: string;
+	is_verified?: boolean;
+	verification_status?: string;
 };
 
 /* ------------------------------------------------------------------ */
@@ -1391,10 +1393,14 @@ export default function Crisis() {
 		}
 	}
 
-	const isPublicOrganization =
+	const isGovernmentOrganization =
 		viewerProfile?.account_type === 'employer' &&
 		(viewerProfile?.is_government_service === true ||
 			viewerProfile?.institution_type === 'government');
+	const isVerifiedGovernmentAccount =
+		isGovernmentOrganization &&
+		(viewerProfile?.is_verified === true ||
+			viewerProfile?.verification_status === 'verified');
 
 	if (loading) {
 		return (
@@ -1407,7 +1413,7 @@ export default function Crisis() {
 	}
 
 	if (!crisis) {
-		if (!isPublicOrganization) {
+		if (!isVerifiedGovernmentAccount) {
 			return (
 				<BaseContentWrapper className="px-8 py-10">
 					<div className="max-w-2xl mx-auto flex flex-col items-center text-center space-y-6">
@@ -1475,7 +1481,7 @@ export default function Crisis() {
 					]}>
 					{!isLoggedIn ? (
 						<GuestReadonlyCrisisRenderer crisis={crisis} />
-					) : isPublicOrganization ? (
+					) : isVerifiedGovernmentAccount ? (
 						<CrisisMapContent
 							crisis={crisis}
 							onEndCrisis={handleEndCrisis}
