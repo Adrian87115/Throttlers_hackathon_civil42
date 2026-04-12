@@ -93,9 +93,21 @@ export default function Register() {
 			}
 			navigate(AppRoutePaths.loginPage());
 		} catch (err: unknown) {
-			const detail =
-				(err as { detail?: string })?.detail ?? 'Wystąpił błąd rejestracji';
-			setError(detail);
+			const axiosDetail = (err as { detail?: string })?.detail;
+			console.log('Registration error:', err);
+			const MESSAGES: Record<string, string> = {
+				'Email is registered': 'Ten adres e-mail jest już zajęty.',
+				'Organization name is taken': 'Nazwa organizacji jest już zajęta.',
+				'orgName is required': 'Nazwa organizacji jest wymagana.',
+				'Password must consist of: at least 8 characters, at least 1 small letter, at least 1 capital letter, at least 1 number, at least 1 special character':
+					'Hasło musi zawierać: min. 8 znaków, małą i wielką literę, cyfrę oraz znak specjalny.',
+				'Internal server error': 'Błąd serwera. Spróbuj ponownie później.'
+			};
+			setError(
+				(axiosDetail && MESSAGES[axiosDetail]) ??
+					axiosDetail ??
+					'Wystąpił błąd rejestracji'
+			);
 		} finally {
 			setLoading(false);
 		}
