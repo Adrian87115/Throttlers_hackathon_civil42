@@ -133,6 +133,10 @@ export default function VolunteerSignup() {
 		});
 	}
 
+	useEffect(() => {
+		window.scrollTo({ top: 0, behavior: 'smooth' });
+	}, []);
+
 	function handleSubmit(e: React.FormEvent) {
 		e.preventDefault();
 		console.log('Volunteer signup:', form);
