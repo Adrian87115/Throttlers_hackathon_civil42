@@ -11,6 +11,92 @@ import { Link, useNavigate } from 'react-router-dom';
 type AccountType = 'user' | 'organization';
 type OrgType = 'private' | 'government';
 
+type BackendValidationError = {
+	type?: string;
+	loc?: unknown;
+	msg?: string;
+	input?: unknown;
+	ctx?: unknown;
+};
+
+const FIELD_LABELS: Record<string, string> = {
+	email: 'E-mail',
+	password: 'Hasło',
+	confirmPassword: 'Potwierdzenie hasła',
+	first_name: 'Imię',
+	last_name: 'Nazwisko',
+	city: 'Miasto',
+	district: 'Dzielnica',
+	phone: 'Telefon',
+	orgName: 'Nazwa organizacji',
+	nip: 'NIP',
+	regon: 'REGON',
+	orgAddress: 'Adres siedziby',
+	orgPhone: 'Telefon kontaktowy',
+	contactPerson: 'Osoba kontaktowa',
+	institutionType: 'Typ instytucji'
+};
+
+function formatBackendErrors(error: unknown): string[] {
+	const fallback = 'Wystąpił błąd rejestracji';
+
+	if (!error || typeof error !== 'object') {
+		return [fallback];
+	}
+
+	const rawDetail = (error as { detail?: unknown }).detail;
+
+	if (!rawDetail) {
+		return [fallback];
+	}
+
+	if (typeof rawDetail === 'string') {
+		const MESSAGES: Record<string, string> = {
+			'Email is registered': 'Ten adres e-mail jest już zajęty.',
+			'Organization name is taken': 'Nazwa organizacji jest już zajęta.',
+			'orgName is required': 'Nazwa organizacji jest wymagana.',
+			'Password must consist of: at least 8 characters, at least 1 small letter, at least 1 capital letter, at least 1 number, at least 1 special character':
+				'Hasło musi zawierać: min. 8 znaków, małą i wielką literę, cyfrę oraz znak specjalny.',
+			'Internal server error': 'Błąd serwera. Spróbuj ponownie później.'
+		};
+
+		return [MESSAGES[rawDetail] ?? rawDetail];
+	}
+
+	if (Array.isArray(rawDetail)) {
+		const details = rawDetail as BackendValidationError[];
+		const messages = details
+			.map((detail) => {
+				if (!detail || typeof detail !== 'object') {
+					return null;
+				}
+
+				const loc = Array.isArray(detail.loc) ? detail.loc : [];
+				const field = String(loc[loc.length - 1] ?? '').trim();
+				const label = FIELD_LABELS[field] ?? field;
+				const msg = typeof detail.msg === 'string' ? detail.msg : '';
+
+				if (!msg) {
+					return null;
+				}
+
+				return label ? `${label}: ${msg}` : msg;
+			})
+			.filter((message): message is string => Boolean(message));
+
+		return messages.length ? messages : [fallback];
+	}
+
+	if (typeof rawDetail === 'object') {
+		const detailMessage = (rawDetail as { msg?: unknown }).msg;
+		if (typeof detailMessage === 'string' && detailMessage.trim()) {
+			return [detailMessage];
+		}
+	}
+
+	return [fallback];
+}
+
 export default function Register() {
 	const { t } = useTranslation();
 
@@ -40,7 +126,7 @@ export default function Register() {
 
 	const [isPassVisible, setIsPassVisible] = useState(false);
 	const [isConfirmPassVisible, setIsConfirmPassVisible] = useState(false);
-	const [error, setError] = useState('');
+	const [errors, setErrors] = useState<string[]>([]);
 	const [loading, setLoading] = useState(false);
 
 	const navigate = useNavigate();
@@ -56,10 +142,10 @@ export default function Register() {
 
 	async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
 		e.preventDefault();
-		setError('');
+		setErrors([]);
 
 		if (formData.password !== formData.confirmPassword) {
-			setError('Hasła nie są identyczne');
+			setErrors(['Hasła nie są identyczne']);
 			return;
 		}
 
@@ -93,21 +179,8 @@ export default function Register() {
 			}
 			navigate(AppRoutePaths.loginPage());
 		} catch (err: unknown) {
-			const axiosDetail = (err as { detail?: string })?.detail;
 			console.log('Registration error:', err);
-			const MESSAGES: Record<string, string> = {
-				'Email is registered': 'Ten adres e-mail jest już zajęty.',
-				'Organization name is taken': 'Nazwa organizacji jest już zajęta.',
-				'orgName is required': 'Nazwa organizacji jest wymagana.',
-				'Password must consist of: at least 8 characters, at least 1 small letter, at least 1 capital letter, at least 1 number, at least 1 special character':
-					'Hasło musi zawierać: min. 8 znaków, małą i wielką literę, cyfrę oraz znak specjalny.',
-				'Internal server error': 'Błąd serwera. Spróbuj ponownie później.'
-			};
-			setError(
-				(axiosDetail && MESSAGES[axiosDetail]) ??
-					axiosDetail ??
-					'Wystąpił błąd rejestracji'
-			);
+			setErrors(formatBackendErrors(err));
 		} finally {
 			setLoading(false);
 		}
@@ -366,10 +439,12 @@ export default function Register() {
 							)}
 						</div>
 
-						{error && (
-							<p className="text-red-500 text-sm text-center mt-4 w-[80%] mx-auto">
-								{error}
-							</p>
+						{errors.length > 0 && (
+							<ul className="text-red-500 text-sm mt-4 w-[80%] mx-auto list-disc pl-5 space-y-1">
+								{errors.map((message, index) => (
+									<li key={`${message}-${index}`}>{message}</li>
+								))}
+							</ul>
 						)}
 
 						<div className="flex flex-col items-center gap-5 mt-15">
@@ -377,11 +452,18 @@ export default function Register() {
 								{loading ? 'Rejestracja...' : t('register.register')}
 							</BaseButton>
 
-							<Link
-								to={AppRoutePaths.loginPage()}
-								className="text-sm text-primary-blue hover:underline">
-								{t('register.alreadyHaveAccount')}
-							</Link>
+							<div className="flex flex-col items-center gap-2">
+								<Link
+									to={AppRoutePaths.loginPage()}
+									className="text-sm text-primary-blue hover:underline">
+									{t('register.alreadyHaveAccount')}
+								</Link>
+								<Link
+									to={AppRoutePaths.mainDashboard()}
+									className="text-sm text-gray-500 hover:text-gray-700 hover:underline">
+									{t('shared.goBack')}
+								</Link>
+							</div>
 						</div>
 					</form>
 				</div>
