@@ -156,11 +156,14 @@ export default function Volunteers() {
 		if (!isAuthenticated || auth.isLoading) return;
 		callWithToken(getMyProfile)
 			.then((profile: any) => {
-				setIsGovernmentOrg(
+				const isGovOrg =
 					profile?.account_type === 'employer' &&
-						(profile?.is_government_service === true ||
-							profile?.institution_type === 'government')
-				);
+					(profile?.is_government_service === true ||
+						profile?.institution_type === 'government');
+				const isVerified =
+					profile?.is_verified === true ||
+					profile?.verification_status === 'verified';
+				setIsGovernmentOrg(isGovOrg && isVerified);
 			})
 			.catch(() => {});
 	}, [isAuthenticated, auth.isLoading]);
