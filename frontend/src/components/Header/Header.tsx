@@ -284,7 +284,6 @@ export default function Header() {
 							},
 							{ separator: true },
 							{
-								icon: <User size={16} />,
 								label: (
 									<Link
 										to={
@@ -292,15 +291,22 @@ export default function Header() {
 												? AppRoutePaths.orgProfile()
 												: AppRoutePaths.userProfile()
 										}
-										className="w-full">
+										className="flex w-full items-center">
+										<span className="mr-2.5 flex items-center text-base-muted-foreground">
+											<User size={16} />
+										</span>
 										{t('header.profile')}
 									</Link>
 								)
 							},
 							{
-								icon: <Settings size={16} />,
 								label: (
-									<Link to={AppRoutePaths.userSettings()} className="w-full">
+									<Link
+										to={AppRoutePaths.userSettings()}
+										className="flex w-full items-center">
+										<span className="mr-2.5 flex items-center text-base-muted-foreground">
+											<Settings size={16} />
+										</span>
 										{t('header.settings')}
 									</Link>
 								)
@@ -308,11 +314,13 @@ export default function Header() {
 							...(isOwner
 								? [
 										{
-											icon: <Shield size={16} />,
 											label: (
 												<Link
 													to={AppRoutePaths.ownerVerifications()}
-													className="w-full">
+													className="flex w-full items-center">
+													<span className="mr-2.5 flex items-center text-base-muted-foreground">
+														<Shield size={16} />
+													</span>
 													Panel właściciela
 												</Link>
 											)
