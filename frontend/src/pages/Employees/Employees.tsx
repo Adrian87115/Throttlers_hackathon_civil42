@@ -1,16 +1,24 @@
 import BorderGlow from '@/components/Animated/BorderGlow/BorderGlow';
 import BaseContentWrapper from '@/components/Wrappers/BaseContentWrapper';
+import { useAuth } from '@/contexts/AuthUserContext';
 import { ALL_EMPLOYEES } from '@/data/employees';
 import { AppRoutePaths } from '@/types/types';
 import {
+	Award,
+	Briefcase,
 	Car,
 	GraduationCap,
 	HardHat,
 	HeartPulse,
 	Laptop,
+	MapPin,
 	ShoppingCart,
+	Star,
 	Tractor,
+	TrendingUp,
 	Truck,
+	UserCheck,
+	Users,
 	UtensilsCrossed,
 	Wrench
 } from 'lucide-react';
@@ -131,65 +139,220 @@ const CATEGORIES: CategoryKey[] = [
 	'services'
 ];
 
+const totalEmployees = ALL_EMPLOYEES.length;
+const availableEmployees = ALL_EMPLOYEES.filter((e) => e.available).length;
+const avgExperience = Math.round(
+	ALL_EMPLOYEES.reduce((sum, e) => sum + e.experience, 0) / totalEmployees
+);
+const topCategory = CATEGORIES.reduce((best, cat) => {
+	const count = ALL_EMPLOYEES.filter((e) => e.category === cat).length;
+	const bestCount = ALL_EMPLOYEES.filter((e) => e.category === best).length;
+	return count > bestCount ? cat : best;
+}, CATEGORIES[0]);
+
+// Top 3 most experienced available employees
+const spotlightEmployees = [...ALL_EMPLOYEES]
+	.filter((e) => e.available)
+	.sort((a, b) => b.experience - a.experience)
+	.slice(0, 3);
+
 export default function Employees() {
 	const { t } = useTranslation();
-
+	const { auth } = useAuth();
+	const isAuthenticated = auth.user !== null;
 	const getEmployeeCount = (cat: CategoryKey) =>
 		ALL_EMPLOYEES.filter((emp) => emp.category === cat).length;
 
+	const getAvailableCount = (cat: CategoryKey) =>
+		ALL_EMPLOYEES.filter((emp) => emp.category === cat && emp.available).length;
+
 	return (
 		<BaseContentWrapper className="px-8">
-			<section className="mb-10">
+			{/* Header */}
+			<section className="mb-8">
 				<h1 className="text-3xl font-bold text-gray-900">
-					{t('dashboard.greeting', {
-						employeeCount: ALL_EMPLOYEES.length
-					})}
+					{t('dashboard.greeting', { employeeCount: totalEmployees })}
 				</h1>
 				<p className="text-base-muted-foreground mt-1">
 					{t('dashboard.pickCategory')}
 				</p>
 			</section>
 
-			<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-5 px-10">
-				{CATEGORIES.map((cat) => {
-					const style = CATEGORY_STYLES[cat];
-					const count = getEmployeeCount(cat);
+			{/* Stats bar */}
+			<div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
+				<div className="rounded-xl border border-base-border bg-white p-5 shadow-sm flex items-center gap-4">
+					<div className="h-11 w-11 rounded-xl bg-primary-blue/10 flex items-center justify-center shrink-0">
+						<Users size={22} className="text-primary-blue" />
+					</div>
+					<div>
+						<p className="text-2xl font-bold text-gray-900">{totalEmployees}</p>
+						<p className="text-xs text-gray-500">Pracowników łącznie</p>
+					</div>
+				</div>
 
-					return (
-						<Link
-							key={cat}
-							to={AppRoutePaths.categoryPage(cat)}
-							className="text-left group">
-							<BorderGlow
-								backgroundColor={style.bg}
-								glowColor={style.glow}
-								colors={style.colors}
-								borderRadius={16}
-								glowRadius={30}
-								edgeSensitivity={20}
-								className="cursor-pointer transition-transform duration-200 hover:scale-[1.03]">
-								<div className="relative min-h-40 overflow-hidden rounded-2xl">
-									<img
-										src={style.image}
-										alt={t(`dashboard.categories.${cat}` as const)}
-										className="absolute inset-0 w-full h-full object-cover opacity-40 blur-xs transition-opacity duration-300 group-hover:opacity-70 group-hover:blur-none"
-									/>
-									<div className="relative p-6 flex flex-col items-center text-center gap-3 min-h-40 justify-center">
-										<div className={style.text}>{CATEGORY_ICONS[cat]}</div>
-										<h3 className="text-white font-semibold text-sm">
-											{t(`dashboard.categories.${cat}` as const)}
-										</h3>
-										<span className="text-xs text-gray-400">
-											{count}{' '}
-											{count === 1 ? 'osoba' : count < 5 ? 'osoby' : 'osob'}
-										</span>
-									</div>
-								</div>
-							</BorderGlow>
-						</Link>
-					);
-				})}
+				<div className="rounded-xl border border-base-border bg-white p-5 shadow-sm flex items-center gap-4">
+					<div className="h-11 w-11 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
+						<UserCheck size={22} className="text-emerald-600" />
+					</div>
+					<div>
+						<p className="text-2xl font-bold text-gray-900">{availableEmployees}</p>
+						<p className="text-xs text-gray-500">Dostępnych teraz</p>
+					</div>
+				</div>
+
+				<div className="rounded-xl border border-base-border bg-white p-5 shadow-sm flex items-center gap-4">
+					<div className="h-11 w-11 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
+						<Award size={22} className="text-amber-500" />
+					</div>
+					<div>
+						<p className="text-2xl font-bold text-gray-900">{avgExperience} lat</p>
+						<p className="text-xs text-gray-500">Śr. doświadczenie</p>
+					</div>
+				</div>
+
+				<div className="rounded-xl border border-base-border bg-white p-5 shadow-sm flex items-center gap-4">
+					<div className="h-11 w-11 rounded-xl bg-violet-50 flex items-center justify-center shrink-0">
+						<TrendingUp size={22} className="text-violet-500" />
+					</div>
+					<div>
+						<p className="text-2xl font-bold text-gray-900">{CATEGORIES.length}</p>
+						<p className="text-xs text-gray-500">Branż</p>
+					</div>
+				</div>
 			</div>
+
+			{/* Spotlight — top experienced */}
+			<section className="mb-10">
+				<div className="flex items-center gap-2 mb-4">
+					<Star size={18} className="text-amber-500" />
+					<h2 className="text-lg font-bold text-gray-900">Wyróżnieni pracownicy</h2>
+					<span className="text-xs text-gray-400 ml-1">— najdłuższy staż, dostępni</span>
+				</div>
+				<div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+					{spotlightEmployees.map((emp, i) => (
+						<Link
+							key={emp.id}
+							to={AppRoutePaths.employeeProfilePage(emp.id)}
+							className="flex items-center gap-4 rounded-xl border border-base-border bg-white p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+							<div className="relative shrink-0">
+								<div className="h-12 w-12 rounded-full bg-primary-blue/10 flex items-center justify-center">
+									<Briefcase size={20} className="text-primary-blue" />
+								</div>
+								{i === 0 && (
+									<span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-amber-400 flex items-center justify-center">
+										<Star size={10} className="text-white" fill="white" />
+									</span>
+								)}
+							</div>
+							<div className="flex-1 min-w-0">
+								<p className="text-sm font-semibold text-gray-900 truncate">
+									{isAuthenticated ? emp.name : '••••• •••••••'}
+								</p>
+								<p className="text-xs text-gray-500 truncate">{emp.role}</p>
+								<div className="flex items-center gap-2 mt-1">
+									<span className="flex items-center gap-1 text-xs text-gray-400">
+										<MapPin size={10} />
+										{emp.location}
+									</span>
+									<span className="text-xs text-primary-blue font-medium">
+										{emp.experience} lat dośw.
+									</span>
+								</div>
+							</div>
+							<span className="shrink-0 text-xs font-medium px-2 py-1 rounded-full bg-green-100 text-green-700">
+								Dostępny
+							</span>
+						</Link>
+					))}
+				</div>
+			</section>
+
+			{/* Category grid */}
+			<section className="mb-10">
+				<h2 className="text-xl font-bold text-gray-900 mb-1">Przeglądaj wg branży</h2>
+				<p className="text-base-muted-foreground mb-6">
+					Kliknij kategorię, aby zobaczyć pracowników
+				</p>
+
+				<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-5 px-10">
+					{CATEGORIES.map((cat) => {
+						const style = CATEGORY_STYLES[cat];
+						const count = getEmployeeCount(cat);
+						const available = getAvailableCount(cat);
+						const availPct = Math.round((available / count) * 100);
+
+						return (
+							<Link
+								key={cat}
+								to={AppRoutePaths.categoryPage(cat)}
+								className="text-left group">
+								<BorderGlow
+									backgroundColor={style.bg}
+									glowColor={style.glow}
+									colors={style.colors}
+									borderRadius={16}
+									glowRadius={30}
+									edgeSensitivity={20}
+									className="cursor-pointer transition-transform duration-200 hover:scale-[1.03]">
+									<div className="relative min-h-40 overflow-hidden rounded-2xl">
+										<img
+											src={style.image}
+											alt={t(`dashboard.categories.${cat}` as const)}
+											className="absolute inset-0 w-full h-full object-cover opacity-40 blur-xs transition-opacity duration-300 group-hover:opacity-70 group-hover:blur-none"
+										/>
+										<div className="relative p-6 flex flex-col items-center text-center gap-2 min-h-40 justify-center">
+											<div className={style.text}>{CATEGORY_ICONS[cat]}</div>
+											<h3 className="text-white font-semibold text-sm">
+												{t(`dashboard.categories.${cat}` as const)}
+											</h3>
+											<span className="text-xs text-gray-400">
+												{count}{' '}
+												{count === 1 ? 'osoba' : count < 5 ? 'osoby' : 'osób'}
+											</span>
+											{/* availability bar */}
+											<div className="w-full mt-1">
+												<div className="h-1 rounded-full bg-white/10 overflow-hidden">
+													<div
+														className="h-full rounded-full bg-emerald-400 transition-all duration-500"
+														style={{ width: `${availPct}%` }}
+													/>
+												</div>
+												<p className="text-[10px] text-emerald-400 mt-1">
+													{available} dostępnych
+												</p>
+											</div>
+										</div>
+									</div>
+								</BorderGlow>
+							</Link>
+						);
+					})}
+				</div>
+			</section>
+
+			{/* Most popular category callout */}
+			<section className="rounded-2xl border border-base-border bg-linear-to-br from-primary-blue/5 to-transparent p-6 flex items-center gap-6">
+				<div className="h-14 w-14 rounded-xl bg-primary-blue/10 flex items-center justify-center shrink-0 text-primary-blue">
+					{CATEGORY_ICONS[topCategory]}
+				</div>
+				<div className="flex-1">
+					<p className="text-xs font-semibold uppercase tracking-wide text-primary-blue mb-0.5">
+						Najpopularniejsza branża
+					</p>
+					<h3 className="text-lg font-bold text-gray-900">
+						{t(`dashboard.categories.${topCategory}` as const)}
+					</h3>
+					<p className="text-sm text-gray-500 mt-0.5">
+						{ALL_EMPLOYEES.filter((e) => e.category === topCategory).length} pracowników &middot;{' '}
+						{ALL_EMPLOYEES.filter((e) => e.category === topCategory && e.available).length} dostępnych
+					</p>
+				</div>
+				<Link
+					to={AppRoutePaths.categoryPage(topCategory)}
+					className="shrink-0 px-5 py-2.5 rounded-lg bg-primary-blue text-white text-sm font-medium hover:bg-primary-blue/90 transition-colors shadow-sm">
+					Zobacz wszystkich
+				</Link>
+			</section>
 		</BaseContentWrapper>
 	);
 }
