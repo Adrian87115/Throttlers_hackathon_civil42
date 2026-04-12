@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthUserContext';
 import { ALL_EMPLOYEES } from '@/data/employees';
 import envConfig from '@/types/envConfig';
 import { AppRoutePaths } from '@/types/types';
+import { DialogDescription } from '@radix-ui/react-dialog';
 import {
 	APIProvider,
 	Map,
@@ -265,6 +266,15 @@ function EmployeeMapPopup({
 						{isAuthenticated ? employee.name : employee.role} —{' '}
 						{employee.location}
 					</DialogTitle>
+					{district && (
+						<DialogDescription className="flex items-center gap-1 text-sm text-gray-500 mt-0.5">
+							<MapPin size={12} className="text-gray-400 shrink-0" />
+							Dzielnica:{' '}
+							<span className="font-medium text-gray-700 ml-1">
+								{district.name}
+							</span>
+						</DialogDescription>
+					)}
 				</DialogHeader>
 				<div className="h-100 w-full">
 					{GOOGLE_MAPS_API_KEY ? (
