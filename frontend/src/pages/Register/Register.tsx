@@ -452,11 +452,18 @@ export default function Register() {
 								{loading ? 'Rejestracja...' : t('register.register')}
 							</BaseButton>
 
-							<Link
-								to={AppRoutePaths.loginPage()}
-								className="text-sm text-primary-blue hover:underline">
-								{t('register.alreadyHaveAccount')}
-							</Link>
+							<div className="flex flex-col items-center gap-2">
+								<Link
+									to={AppRoutePaths.loginPage()}
+									className="text-sm text-primary-blue hover:underline">
+									{t('register.alreadyHaveAccount')}
+								</Link>
+								<Link
+									to={AppRoutePaths.mainDashboard()}
+									className="text-sm text-gray-500 hover:text-gray-700 hover:underline">
+									{t('shared.goBack')}
+								</Link>
+							</div>
 						</div>
 					</form>
 				</div>
