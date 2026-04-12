@@ -325,6 +325,13 @@ export default function CategoryDetail() {
 			emp.location.toLowerCase().includes(searchQuery.toLowerCase())
 	);
 
+	useEffect(() => {
+		window.scrollTo({
+			top: 0,
+			behavior: 'smooth'
+		});
+	}, []);
+
 	return (
 		<BaseContentWrapper className="px-8">
 			<section className="mb-8">
