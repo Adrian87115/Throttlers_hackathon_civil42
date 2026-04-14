@@ -1,5 +1,5 @@
 import BaseButton from '@/components/Buttons/BaseButton';
-import { useAuth } from '@/contexts/AuthUserContext';
+import { useViewerAccess } from '@/hooks/useViewerAccess';
 import { AppRoutePaths } from '@/types/types';
 import { Briefcase, MapPin, UserRound } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -34,10 +34,9 @@ type Props = {
 
 export default function EmployeeCard({ employee }: Props) {
 	const { t } = useTranslation();
-	const { auth } = useAuth();
-	const isAuthenticated = auth.user !== null;
+	const { isVerifiedUser } = useViewerAccess();
 
-	if (!isAuthenticated) {
+	if (!isVerifiedUser) {
 		return (
 			<div className="group rounded-xl border-none bg-gray p-5 shadow-base transition-all duration-200 hover:shadow-base-tile hover:-translate-y-0.5">
 				<div className="flex-1 min-w-0">

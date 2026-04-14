@@ -1,6 +1,6 @@
 import BorderGlow from '@/components/Animated/BorderGlow/BorderGlow';
 import BaseContentWrapper from '@/components/Wrappers/BaseContentWrapper';
-import { useAuth } from '@/contexts/AuthUserContext';
+import { useViewerAccess } from '@/hooks/useViewerAccess';
 import { ALL_EMPLOYEES } from '@/data/employees';
 import { AppRoutePaths } from '@/types/types';
 import {
@@ -158,8 +158,8 @@ const spotlightEmployees = [...ALL_EMPLOYEES]
 
 export default function Employees() {
 	const { t } = useTranslation();
-	const { auth } = useAuth();
-	const isAuthenticated = auth.user !== null;
+	const { isVerifiedUser } = useViewerAccess();
+	const isAuthenticated = isVerifiedUser;
 	const getEmployeeCount = (cat: CategoryKey) =>
 		ALL_EMPLOYEES.filter((emp) => emp.category === cat).length;
 

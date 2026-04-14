@@ -6,11 +6,9 @@ import {
 	DialogHeader,
 	DialogTitle
 } from '@/components/ui/dialog';
-import { useAuth } from '@/contexts/AuthUserContext';
-import { useAuthenticatedApi } from '@/hooks/useAuthenticatedApi';
+import { useViewerAccess } from '@/hooks/useViewerAccess';
 import { ALL_EMPLOYEES } from '@/data/employees';
 import { ALL_VOLUNTEERS, type Volunteer } from '@/data/volunteers';
-import { getMyProfile } from '@/services/auth';
 import envConfig from '@/types/envConfig';
 import {
 	APIProvider,
@@ -313,27 +311,13 @@ type Tab = 'all' | 'employees' | 'volunteers';
 
 export default function SearchResults() {
 	const { t } = useTranslation();
-	const { auth } = useAuth();
-	const { callWithToken } = useAuthenticatedApi();
-	const isAuthenticated = auth.user !== null;
+	const { isVerifiedUser, isVerifiedGovOrg } = useViewerAccess();
+	const isAuthenticated = isVerifiedUser;
+	const isGovernmentOrg = isVerifiedGovOrg;
 	const [searchParams] = useSearchParams();
 	const query = searchParams.get('q')?.trim() || '';
 	const [mapEmployee, setMapEmployee] = useState<Employee | null>(null);
 	const [activeTab, setActiveTab] = useState<Tab>('all');
-	const [isGovernmentOrg, setIsGovernmentOrg] = useState(false);
-
-	useEffect(() => {
-		if (!isAuthenticated || auth.isLoading) return;
-		callWithToken(getMyProfile)
-			.then((profile: any) => {
-				setIsGovernmentOrg(
-					profile?.account_type === 'employer' &&
-						(profile?.is_government_service === true ||
-							profile?.institution_type === 'government')
-				);
-			})
-			.catch(() => {});
-	}, [isAuthenticated, auth.isLoading]);
 
 	const employeeResults: Employee[] = query
 		? ALL_EMPLOYEES.filter(

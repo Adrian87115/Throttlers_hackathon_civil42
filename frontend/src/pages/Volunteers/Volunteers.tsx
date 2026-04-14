@@ -1,9 +1,7 @@
 import BorderGlow from '@/components/Animated/BorderGlow/BorderGlow';
 import BaseContentWrapper from '@/components/Wrappers/BaseContentWrapper';
-import { useAuth } from '@/contexts/AuthUserContext';
 import { ALL_VOLUNTEERS } from '@/data/volunteers';
-import { useAuthenticatedApi } from '@/hooks/useAuthenticatedApi';
-import { getMyProfile } from '@/services/auth';
+import { useViewerAccess } from '@/hooks/useViewerAccess';
 import { AppRoutePaths } from '@/types/types';
 import {
 	Car,
@@ -25,7 +23,7 @@ import {
 	Wrench
 } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import type { CategoryKey } from '../MainDashboard/EmployeeCard';
@@ -144,29 +142,12 @@ const CATEGORIES: CategoryKey[] = [
 
 export default function Volunteers() {
 	const { t } = useTranslation();
-	const { auth } = useAuth();
-	const { callWithToken } = useAuthenticatedApi();
-	const isAuthenticated = auth.user !== null;
+	const { isVerifiedUser, isVerifiedGovOrg } = useViewerAccess();
+	const isAuthenticated = isVerifiedUser;
+	const isGovernmentOrg = isVerifiedGovOrg;
 	const [expandedCategory, setExpandedCategory] = useState<CategoryKey | null>(
 		null
 	);
-	const [isGovernmentOrg, setIsGovernmentOrg] = useState(false);
-
-	useEffect(() => {
-		if (!isAuthenticated || auth.isLoading) return;
-		callWithToken(getMyProfile)
-			.then((profile: any) => {
-				const isGovOrg =
-					profile?.account_type === 'employer' &&
-					(profile?.is_government_service === true ||
-						profile?.institution_type === 'government');
-				const isVerified =
-					profile?.is_verified === true ||
-					profile?.verification_status === 'verified';
-				setIsGovernmentOrg(isGovOrg && isVerified);
-			})
-			.catch(() => {});
-	}, [isAuthenticated, auth.isLoading]);
 
 	const getVolunteerCount = (cat: CategoryKey) =>
 		ALL_VOLUNTEERS.filter((v) => v.category === cat).length;

@@ -1,8 +1,6 @@
 import BaseContentWrapper from '@/components/Wrappers/BaseContentWrapper';
-import { useAuth } from '@/contexts/AuthUserContext';
-import { useAuthenticatedApi } from '@/hooks/useAuthenticatedApi';
+import { useViewerAccess } from '@/hooks/useViewerAccess';
 import { ALL_EMPLOYEES } from '@/data/employees';
-import { getMyProfile, getUserMe } from '@/services/auth';
 import envConfig from '@/types/envConfig';
 import {
 	APIProvider,
@@ -16,15 +14,6 @@ import { useTranslation } from 'react-i18next';
 import type { CategoryKey } from '../MainDashboard/EmployeeCard';
 import type { District, DistrictEmployee } from './districts';
 import { LUBLIN_DISTRICTS } from './districts';
-
-interface UserVerificationSnapshot {
-	is_verified?: boolean;
-	verification_status?: string;
-}
-
-interface UserMeSnapshot {
-	isOwner?: boolean;
-}
 
 const GOOGLE_MAPS_API_KEY = envConfig.googlemaps.token || '';
 
@@ -221,59 +210,12 @@ function EmployeeListItem({
 
 function MapContent() {
 	const { t } = useTranslation();
-	const { auth } = useAuth();
-	const { callWithToken } = useAuthenticatedApi();
+	const { isVerifiedUser } = useViewerAccess();
 	const [selectedDistrict, setSelectedDistrict] = useState<District | null>(
 		null
 	);
 	const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
-	const [canViewEmployeeIdentity, setCanViewEmployeeIdentity] = useState(false);
-
-	useEffect(() => {
-		let isMounted = true;
-
-		async function resolveIdentityVisibility() {
-			if (!auth.user?.id) {
-				setCanViewEmployeeIdentity(false);
-				return;
-			}
-
-			if (auth.user.accountType === 'employer') {
-				setCanViewEmployeeIdentity(true);
-				return;
-			}
-
-			try {
-				const [profileResult, userMeResult] = await Promise.allSettled([
-					callWithToken(getMyProfile) as Promise<UserVerificationSnapshot>,
-					callWithToken(getUserMe) as Promise<UserMeSnapshot>
-				]);
-
-				const profile =
-					profileResult.status === 'fulfilled' ? profileResult.value : null;
-				const userMe =
-					userMeResult.status === 'fulfilled' ? userMeResult.value : null;
-				const isVerified =
-					profile?.is_verified === true ||
-					profile?.verification_status === 'verified';
-				const isOwner = userMe?.isOwner === true;
-
-				if (isMounted) {
-					setCanViewEmployeeIdentity(isVerified || isOwner);
-				}
-			} catch {
-				if (isMounted) {
-					setCanViewEmployeeIdentity(false);
-				}
-			}
-		}
-
-		resolveIdentityVisibility();
-
-		return () => {
-			isMounted = false;
-		};
-	}, [auth.user?.id, callWithToken]);
+	const canViewEmployeeIdentity = isVerifiedUser;
 
 	const handleDistrictClick = useCallback((district: District) => {
 		setSelectedDistrict(district);

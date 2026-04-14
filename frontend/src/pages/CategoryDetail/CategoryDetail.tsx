@@ -5,7 +5,7 @@ import {
 	DialogTitle
 } from '@/components/ui/dialog';
 import BaseContentWrapper from '@/components/Wrappers/BaseContentWrapper';
-import { useAuth } from '@/contexts/AuthUserContext';
+import { useViewerAccess } from '@/hooks/useViewerAccess';
 import { ALL_EMPLOYEES } from '@/data/employees';
 import envConfig from '@/types/envConfig';
 import { AppRoutePaths } from '@/types/types';
@@ -310,8 +310,10 @@ function EmployeeMapPopup({
 
 export default function CategoryDetail() {
 	const { t } = useTranslation();
-	const { auth } = useAuth();
-	const isAuthenticated = auth.user !== null;
+	const { isAuthenticated: isLoggedIn, isVerifiedUser } = useViewerAccess();
+	const isAuthenticated = isVerifiedUser;
+	const showLoginBanner = !isLoggedIn;
+	const showUnverifiedBanner = isLoggedIn && !isVerifiedUser;
 	const { category } = useParams<{ category: string }>();
 	const [searchQuery, setSearchQuery] = useState('');
 	const [mapEmployee, setMapEmployee] = useState<Employee | null>(null);
@@ -381,15 +383,22 @@ export default function CategoryDetail() {
 			</section>
 
 			<section className="mb-6">
-				{!isAuthenticated && (
+				{showLoginBanner && (
 					<div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-						Aby przegladac profile oraz szczegolowe informacje o osobach,
-						zaloguj sie.
+						Aby przeglądać profile oraz szczegółowe informacje o osobach,
+						zaloguj się.
 						<Link
 							to={AppRoutePaths.loginPage()}
 							className="ml-2 inline-flex font-semibold text-amber-900 underline underline-offset-2 hover:opacity-80">
-							Przejdz do logowania
+							Przejdź do logowania
 						</Link>
+					</div>
+				)}
+				{showUnverifiedBanner && (
+					<div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+						Twoja organizacja oczekuje na weryfikację. Dostęp do pełnych profili
+						pracowników zostanie odblokowany po zatwierdzeniu konta przez
+						administratora.
 					</div>
 				)}
 				<input
